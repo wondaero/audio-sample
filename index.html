@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <style>
+        html{background: linear-gradient(to bottom, #005197, #fff) no-repeat;}
+        html, body{height: 100%; padding: 0; margin: 0;}
+        *{box-sizing: border-box;}
+        .player1{
+            width: 300px;
+            height: 300px;
+            /* background: red; */
+            margin: 0 auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-50%);
+            top: 50%;
+            
+        }
+        
+
+        .cover-img{
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            border-radius: 50%;
+            position: absolute;
+            background: red;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        svg{
+            width: 100%;
+            height: 100%;
+            /* background: linear-gradient(45deg, cyan 50%, yellow 0) */
+
+        }
+    </style>
+</head>
+<body>
+    <div id="player1" class="player1">
+    </div>
+
+    <script>
+
+        const player1 = new Player1({
+            width: 300,
+            height: 300,
+            strokeWidth: 10,
+            target: '#player1',
+            coverUrl: 'https://www.bookswage.com/files/877cac95f75049c39f03c2f499ff81311686557110717/QxIuQIIcxD.png',
+        });
+
+
+        function Player1 (param){
+            const t = this;
+
+            t.width = 0;
+            t.height = 0;
+            t.radius = 0;
+            t.strokeWidth = 0;
+            t.target;
+            t.playBar;
+            t.coverUrl = '';
+            t.circumference = 0;
+            t.curDeg = 0;
+
+
+            const curOffset = deg => t.circumference * (1 - (deg / 360));
+            const radianToDeg  = r => r * 180 / Math.PI;
+            const degToRadian  = deg => deg * Math.PI / 180;;
+
+            function constructor(){
+                t.width = param.width;
+                t.height = param.height;
+                t.strokeWidth = param.strokeWidth;
+                t.target = document.querySelector(param.target);
+                t.coverUrl = param.coverUrl;
+                t.radius = (t.width * .5) - t.strokeWidth;
+
+                t.curDeg = 0;
+
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                const coverImg = document.createElement('div');
+
+                t.circumference = 2 * Math.PI * ((t.width * .5) - (t.strokeWidth));
+                
+
+                const coverPad = (t.strokeWidth * 2) + 5;
+                
+                coverImg.style.cssText = `
+                    background: url(${t.coverUrl}) no-repeat center;
+                    width: ${t.width - (coverPad * 2)}px;
+                    height: ${t.height - (coverPad * 2)}px;
+                    border-radius: 50%;
+                    position: absolute;
+                    top: ${coverPad}px;
+                    left: ${coverPad}px;
+                `;
+
+                const playBarTrack = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                const playBar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                const handler = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+                t.playBar = playBar;
+
+
+                playBarTrack.setAttribute('cx', t.width * .5);
+                playBarTrack.setAttribute('cy', t.height * .5);
+                playBarTrack.setAttribute('r', t.radius);
+                playBarTrack.setAttribute('fill', 'none');
+                playBarTrack.setAttribute('stroke', 'rgba(255, 255, 255, .5)');
+                playBarTrack.setAttribute('stroke-width', t.strokeWidth);
+
+                playBar.setAttribute('cx', t.width * .5);
+                playBar.setAttribute('cy', t.height * .5);
+                playBar.setAttribute('r', t.radius);
+                playBar.setAttribute('fill', 'none');
+                playBar.style.transform = 'rotate(-90deg)';
+                playBar.style.transformOrigin = '50%';
+                playBar.setAttribute('stroke', '#005197');
+                playBar.setAttribute('stroke-width', t.strokeWidth);
+                playBar.setAttribute('stroke-linecap', 'round');
+                
+                playBar.setAttribute('stroke-dasharray', t.circumference);
+                playBar.setAttribute('stroke-dashoffset', curOffset(t.curDeg));
+                
+                
+                handler.setAttribute('cx', t.width * .5);
+                handler.setAttribute('cy', t.strokeWidth);
+                handler.setAttribute('r', t.strokeWidth);
+                handler.setAttribute('fill', '#005197');
+
+                t.handler = handler;
+
+
+                svg.appendChild(playBarTrack);
+                svg.appendChild(playBar);
+                svg.appendChild(handler);
+                
+                t.target.appendChild(svg);
+                t.target.appendChild(coverImg);
+
+                t.target.removeEventListener('click', fnc_handler);
+                t.target.addEventListener('click', fnc_handler);
+
+
+                t.playing = (deg) => {
+                    t.playBar.setAttribute('stroke-dasharray', t.circumference);
+                    t.playBar.setAttribute('stroke-dashoffset', curOffset(deg));
+
+                    t.handler.setAttribute('cx', Math.sin(degToRadian(t.curDeg)) * t.radius + (t.width * .5));
+                    t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(t.curDeg)) * t.radius + (t.height * .5)));
+                }
+
+                function fnc_handler(e){
+                    const x = e.offsetX;
+                    const y = e.offsetY;
+
+                    const centerX = t.width * .5;
+                    const centerY = t.height * .5;
+
+                    const dx = centerX - x;
+                    const dy = centerY - y;
+                    const dxy = Math.sqrt(dx * dx + dy * dy);
+
+                    let clickedDeg = 0;
+
+                    if(x > centerX && y < centerY){ //1사분면
+                        clickedDeg = radianToDeg(Math.acos(dy / dxy));
+                    }else if(x > centerX && y > centerY){   //4사분면
+                        clickedDeg = 90 - radianToDeg(Math.acos(dx/ dxy)) + 180;
+                    }else if(x < centerX && y < centerY){   //2사분면
+                        clickedDeg = radianToDeg(Math.acos(dx/ dxy)) + 270;
+                    }else if(x < centerX && y > centerY){   //3사분면
+                        clickedDeg = 90 - radianToDeg(Math.acos(dy / dxy)) + 270;
+                    }else{
+                        if(x > centerX) clickedDeg = 90;
+                        else if(x < centerX) clickedDeg = 270;
+                        else if(y > centerY) clickedDeg = 180;
+                        else if(y < centerY) clickedDeg = 0;
+                    }
+
+                    t.curDeg = clickedDeg;
+
+                    console.log(t.curDeg);
+
+                    t.playing(t.curDeg);
+                }
+
+
+            }
+
+            constructor();
+
+        }
+
+
+
+
+
+    </script>
+</body>
+</html>
