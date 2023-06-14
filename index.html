@@ -2,18 +2,16 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SVG</title>
+    <title>audioPlayer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <link rel="stylesheet" href="./normalize.css">
 
     <style>
-        html{background: linear-gradient(to bottom, #005197, #fff) no-repeat;}
-        html, body{height: 100%; padding: 0; margin: 0;}
+        html, body{height: 100%; background: linear-gradient(to bottom, #005197, #fff) no-repeat;}
         *{box-sizing: border-box;}
         .player1{
             width: 300px;
             height: 300px;
-            /* background: red; */
             margin: 0 auto;
             position: relative;
             display: flex;
@@ -39,8 +37,6 @@
         svg{
             width: 100%;
             height: 100%;
-            /* background: linear-gradient(45deg, cyan 50%, yellow 0) */
-
         }
     </style>
 </head>
@@ -72,6 +68,8 @@
             t.circumference = 0;
             t.curDeg = 0;
 
+            t.isDowned - false; //마우스 클릭시
+
 
             const curOffset = deg => t.circumference * (1 - (deg / 360));
             const radianToDeg  = r => r * 180 / Math.PI;
@@ -86,6 +84,8 @@
                 t.radius = (t.width * .5) - t.strokeWidth;
 
                 t.curDeg = 0;
+
+                
 
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 const coverImg = document.createElement('div');
@@ -148,19 +148,73 @@
                 t.target.appendChild(svg);
                 t.target.appendChild(coverImg);
 
-                t.target.removeEventListener('click', fnc_handler);
-                t.target.addEventListener('click', fnc_handler);
+                
+
+                // t.target.removeEventListener('click', fnc_handler);
+                // t.target.addEventListener('click', fnc_handler);
+                t.target.addEventListener('mousedown', fnc_mouseDownEvent);
+                t.target.addEventListener('mousemove', fnc_mouseMoveEvent);
+                t.target.addEventListener('mouseup', fnc_mouseUpEvent);
+                // t.target.addEventListener('mouseUp', fnc_handler);
 
 
-                t.playing = (deg) => {
-                    t.playBar.setAttribute('stroke-dasharray', t.circumference);
-                    t.playBar.setAttribute('stroke-dashoffset', curOffset(deg));
+                
 
-                    t.handler.setAttribute('cx', Math.sin(degToRadian(t.curDeg)) * t.radius + (t.width * .5));
-                    t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(t.curDeg)) * t.radius + (t.height * .5)));
+                function fnc_mouseDownEvent(e){
+                    t.isDowned = true;
+                }
+                function fnc_mouseMoveEvent(e){
+                    if(!t.isDowned) return;
+
+                    t.playing2(getDxy(e.offsetX, e.offsetY));
+                }
+                function fnc_mouseUpEvent(e){
+                    if(!t.isDowned) return;
+
+                    t.playing(getDxy(e.offsetX, e.offsetY));
+
+                    t.isDowned = false;
+                    console.log(e);
                 }
 
+
+
                 function fnc_handler(e){
+                    const x = e.offsetX;
+                    const y = e.offsetY;
+                    console.log(e);
+                }
+
+                function getDxy(x, y){
+                    const centerX = t.width * .5;
+                    const centerY = t.height * .5;
+
+                    const dx = centerX - x;
+                    const dy = centerY - y;
+                    const dxy = Math.sqrt(dx * dx + dy * dy);
+
+                    let curDeg = 0;
+
+                    if(x > centerX && y < centerY){ //1사분면
+                        curDeg = radianToDeg(Math.acos(dy / dxy));
+                    }else if(x > centerX && y > centerY){   //4사분면
+                        curDeg = 90 - radianToDeg(Math.acos(dx/ dxy)) + 180;
+                    }else if(x < centerX && y < centerY){   //2사분면
+                        curDeg = radianToDeg(Math.acos(dx/ dxy)) + 270;
+                    }else if(x < centerX && y > centerY){   //3사분면
+                        curDeg = 90 - radianToDeg(Math.acos(dy / dxy)) + 270;
+                    }else{
+                        if(x > centerX) curDeg = 90;
+                        else if(x < centerX) curDeg = 270;
+                        else if(y > centerY) curDeg = 180;
+                        else if(y < centerY) curDeg = 0;
+                    }
+
+                    console.log(curDeg);
+                    return curDeg;
+                }
+
+                function fnc_handler2(e){
                     const x = e.offsetX;
                     const y = e.offsetY;
 
@@ -195,11 +249,22 @@
                     t.playing(t.curDeg);
                 }
 
-
             }
 
             constructor();
 
+            t.playing = (deg) => {
+                t.playBar.setAttribute('stroke-dasharray', t.circumference);
+                t.playBar.setAttribute('stroke-dashoffset', curOffset(deg));
+
+                t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
+                t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
+            }
+            
+            t.playing2 = (deg) => {
+                t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
+                t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
+            } 
         }
 
 
