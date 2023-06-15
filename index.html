@@ -149,32 +149,49 @@
                 t.target.appendChild(coverImg);
 
                 
-
-                // t.target.removeEventListener('click', fnc_handler);
-                // t.target.addEventListener('click', fnc_handler);
+                t.target.removeEventListener('mousedown', fnc_mouseDownEvent);
+                t.target.removeEventListener('mousemove', fnc_mouseMoveEvent);
+                t.target.removeEventListener('mouseup', fnc_mouseUpEvent);
+                t.target.removeEventListener('touchstart', fnc_mouseDownEvent);
+                t.target.removeEventListener('touchmove', fnc_mouseMoveEvent);
+                t.target.removeEventListener('touchend', fnc_mouseUpEvent);
+                
                 t.target.addEventListener('mousedown', fnc_mouseDownEvent);
                 t.target.addEventListener('mousemove', fnc_mouseMoveEvent);
                 t.target.addEventListener('mouseup', fnc_mouseUpEvent);
-                // t.target.addEventListener('mouseUp', fnc_handler);
-
+                t.target.addEventListener('touchstart', fnc_mouseDownEvent);
+                t.target.addEventListener('touchmove', fnc_mouseMoveEvent);
+                t.target.addEventListener('touchend', fnc_mouseUpEvent);
 
                 
 
                 function fnc_mouseDownEvent(e){
+                    // e.preventDefault();
                     t.isDowned = true;
+
                 }
                 function fnc_mouseMoveEvent(e){
+                    e.preventDefault();
                     if(!t.isDowned) return;
 
-                    t.playing2(getDxy(e.offsetX, e.offsetY));
+                    const xy = t.target.getBoundingClientRect();
+
+                    const x = e.touches ? e.touches[0].clientX - xy.x : e.offsetX;
+                    const y = e.touches ? e.touches[0].clientY - xy.y: e.offsetY;
+
+                    t.playing2(getDxy(x, y));
                 }
                 function fnc_mouseUpEvent(e){
+                    e.preventDefault();
                     if(!t.isDowned) return;
 
-                    t.playing(getDxy(e.offsetX, e.offsetY));
+                    const xy = t.target.getBoundingClientRect();
 
+                    const x = e.changedTouches ? e.changedTouches[0].clientX - xy.x : e.offsetX;
+                    const y = e.changedTouches ? e.changedTouches[0].clientY - xy.y : e.offsetY;
+
+                    t.playing(getDxy(x, y));
                     t.isDowned = false;
-                    console.log(e);
                 }
 
 
@@ -210,7 +227,7 @@
                         else if(y < centerY) curDeg = 0;
                     }
 
-                    console.log(curDeg);
+                    // console.log(curDeg);
                     return curDeg;
                 }
 
@@ -254,6 +271,7 @@
             constructor();
 
             t.playing = (deg) => {
+                t.curDeg = deg;
                 t.playBar.setAttribute('stroke-dasharray', t.circumference);
                 t.playBar.setAttribute('stroke-dashoffset', curOffset(deg));
 
@@ -262,6 +280,7 @@
             }
             
             t.playing2 = (deg) => {
+                t.curDeg = deg;
                 t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
                 t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
             } 
