@@ -18,15 +18,41 @@
             flex-direction: column;
         }
 
+        .player{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+
+        .time{width: 100px; text-align: center; color: rgba(255, 255, 255, .8);}
+
+        @media(max-width: 520px){
+            .player{flex-direction: column;}
+            .cur-time{order: 2;}
+            .player1{order: 1;}
+            .total-time{order: 0;}
+        }
+
     </style>
 </head>
 <body>
     <div class="wrapper">
-        <div id="player1" class="player1"></div>
-        <button onclick="playBtn()">play</button>
+        <div class="player">
+            <div id="curTime" class="time cur-time"></div>
+            <div id="player1" class="player1"></div>
+            <div id="totalTime" class="time total-time"></div>
+        </div>
+        <div class="btns1">
+            <button onclick="playBtn()">play</button>
+        </div>
     </div>
 
     <script>
+        const totalTime = document.querySelector('#totalTime');
+        const curTime = document.querySelector('#curTime');
+
+        const sTohhmmss = s =>  `${!String(parseInt(s / 360)).length ? 0 : ''}${parseInt(s / 360)} : ${parseInt(s / 60)} : ${(Math.round(s) % 60)}`;
 
         const player1 = new Player1({
             width: 300,
@@ -35,7 +61,14 @@
             target: '#player1',
             coverUrl: 'https://www.bookswage.com/files/877cac95f75049c39f03c2f499ff81311686557110717/QxIuQIIcxD.png',
             audioUrl: 'audio-sample.mp3',
-            shortCut: ['space']
+            shortCut: ['space'],
+            playingFnc: (info) => {
+                totalTime.innerHTML = sTohhmmss(info.duration);
+                curTime.innerHTML = sTohhmmss(info.curTime);
+
+                
+                
+            }
         });
 
 
@@ -58,14 +91,15 @@
             t.curTime = 0;
             t.raf;
             t.isPlaying = false;
+            t.duration = 0;
 
 
             const curOffset = deg => t.circumference * (1 - (deg / 360));
             const radianToDeg  = r => r * 180 / Math.PI;
             const degToRadian  = deg => deg * Math.PI / 180;
+            
 
             t.init = obj => {
-                // t.audio.stop();
                 window.cancelAnimationFrame(t.raf);
 
                 t.width = obj.width || t.width;
@@ -76,6 +110,7 @@
                 t.circumference = 2 * Math.PI * ((t.width * .5) - (t.strokeWidth));
                 t.curDeg = 0;
                 t.audio = new Audio(obj.audioUrl);
+                t.duration = t.audio.duration;
 
                 t.isDowned = false; //마우스 클릭시
                 t.curTime = 0;
@@ -93,6 +128,7 @@
                 t.radius = (t.width * .5) - t.strokeWidth;
 
                 t.audio = new Audio(param.audioUrl);
+                t.duration = t.audio.duration;
 
                 t.curDeg = 0;
                 t.raf;
@@ -138,7 +174,7 @@
                 playBarTrack.setAttribute('r', t.radius);
                 playBarTrack.setAttribute('fill', 'none');
                 playBarTrack.setAttribute('stroke', 'rgba(255, 255, 255, .5)');
-                playBarTrack.setAttribute('stroke-width', t.strokeWidth);
+                playBarTrack.setAttribute('stroke-width', t.strokeWidth * .5);
 
                 playBar.setAttribute('cx', t.width * .5);
                 playBar.setAttribute('cy', t.height * .5);
@@ -262,7 +298,6 @@
 
                     })
                 }
-
             }
 
             constructor();
@@ -303,13 +338,20 @@
                 // console.log(t.audio.currentTime);
                 // console.log(t.audio.duration);
                 t.curTime = t.audio.currentTime;
+                t.duration = t.audio.duration;
                 if(t.audio.ended) {
                     t.isPlaying = false;
                     t.audio.currentTime = t.curTime = 0;
+                    // t.duration = 0;
+                    t.playing(t.perToDeg(0));
+                    param.playingFnc(t);
                     return;
                 }
 
                 t.playing(t.perToDeg(t.curTime / t.audio.duration * 100));
+                if(param.playingFnc && typeof param.playingFnc === 'function'){
+                    param.playingFnc(t);
+                }
                 t.raf = window.requestAnimationFrame(playing);
             }
         }
