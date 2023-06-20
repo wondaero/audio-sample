@@ -52,314 +52,322 @@
         const totalTime = document.querySelector('#totalTime');
         const curTime = document.querySelector('#curTime');
 
-        const sTohhmmss = s =>  `${!String(parseInt(s / 360)).length ? 0 : ''}${parseInt(s / 360)} : ${parseInt(s / 60)} : ${(Math.round(s) % 60)}`;
+        const fillZero = (num, digit) =>  num < 10 ** digit ? String(10 ** digit + num).substr(1) : num;    //padStart로 대체 가능
+        const sTohhmmss = s =>  `${fillZero(parseInt(s / 360), 2)} : ${fillZero(parseInt(s / 60), 2)} : ${fillZero((Math.round(s) % 60), 2)}`;
 
         const player1 = new Player1({
-            width: 300,
-            height: 300,
-            strokeWidth: 10,
             target: '#player1',
+            size: 468,
+            handlerSize: 16,
+            handlerColor: '#00519780',
+            trackColor: 'rgba(255, 255, 255, .5)',
+            progressColor: '#005197',
+            progressWidth: 5,
+            trackWidth: 3,
             coverUrl: 'https://www.bookswage.com/files/877cac95f75049c39f03c2f499ff81311686557110717/QxIuQIIcxD.png',
-            audioUrl: 'audio-sample.mp3',
-            shortCut: ['space'],
-            playingFnc: (info) => {
-                totalTime.innerHTML = sTohhmmss(info.duration);
-                curTime.innerHTML = sTohhmmss(info.curTime);
-
-                
-                
-            }
+            coverMargin: 17
         });
 
 
         function Player1 (param){
             const t = this;
 
-            t.width = 0;
-            t.height = 0;
-            t.radius = 0;
-            t.strokeWidth = 0;
-            t.target;
-            t.playBar;
-            t.coverUrl = '';
-            t.circumference = 0;
-            t.curDeg = 0;
-            // t.audioUrl = param.audioUrl;
-            t.audio = '';
-
-            t.isDowned = false; //마우스 클릭시
-            t.curTime = 0;
-            t.raf;
-            t.isPlaying = false;
-            t.duration = 0;
-
-
-            const curOffset = deg => t.circumference * (1 - (deg / 360));
+            const curOffset = deg => t.player.circumference * (1 - (deg / 360));
             const radianToDeg  = r => r * 180 / Math.PI;
             const degToRadian  = deg => deg * Math.PI / 180;
+            const getDegByDxDy = (x, y) => {
+                const centerX = t.player.size * .5;
+                const centerY = t.player.size * .5;
+
+                const dx = centerX - x;
+                const dy = centerY - y;
+                const dxy = Math.sqrt(dx * dx + dy * dy);
+
+                let curDeg = 0;
+
+                if(x > centerX && y < centerY){ //1사분면
+                    curDeg = radianToDeg(Math.acos(dy / dxy));
+                }else if(x > centerX && y > centerY){   //4사분면
+                    curDeg = 90 - radianToDeg(Math.acos(dx/ dxy)) + 180;
+                }else if(x < centerX && y < centerY){   //2사분면
+                    curDeg = radianToDeg(Math.acos(dx/ dxy)) + 270;
+                }else if(x < centerX && y > centerY){   //3사분면
+                    curDeg = 90 - radianToDeg(Math.acos(dy / dxy)) + 270;
+                }else{
+                    if(x > centerX) curDeg = 90;
+                    else if(x < centerX) curDeg = 270;
+                    else if(y > centerY) curDeg = 180;
+                    else if(y < centerY) curDeg = 0;
+                }
+
+                // console.log(curDeg);
+                return curDeg;
+            }
+
+            t.isDowned = false; //마우스 클릭시
+
+            t.player = {
+                size: 0,
+                target: ''
+            }
+
+            t.cover = {
+                size: 0,
+                margin: 0,
+                src: ''
+            }
+
+            t.a = {
+
+            }
+
+            t.b = {
+
+            }
+
+            t.abTrack = {
+                target: '',
+                radius: 0,
+                width: 0,
+                color: 0,
+                cx: 0,
+                cy: 0,
+                a: 0,
+                b: 0
+            }
+
+            t.abSection = {
+                target: ''
+            }
+
+            t.track = {
+                target: '',
+                radius: 0,
+                width: 0,
+                color: 0,
+                cx: 0,
+                cy: 0
+            }
             
+            t.progress = {
+                target: '',
+                radius: 0,
+                width: 0,
+                color: 0,
+                cx: 0,
+                cy: 0,
+                a: 0,
+                b: 0,
+                deg: 0
+            }
 
-            t.init = obj => {
-                window.cancelAnimationFrame(t.raf);
+            t.handler = {
+                target: '',
+                size: 0,
+                color: 0,
+                deg: 0,
+                cx: 0,
+                cy: 0,
+            }
 
-                t.width = obj.width || t.width;
-                t.height = obj.height || t.height;
-                t.radius = (t.width * .5) - t.strokeWidth;
-                t.strokeWidth = obj.strokeWidth || t.strokeWidth;
-                t.coverUrl = obj.coverUrl || t.coverUrl;
-                t.circumference = 2 * Math.PI * ((t.width * .5) - (t.strokeWidth));
-                t.curDeg = 0;
-                t.audio = new Audio(obj.audioUrl);
-                t.duration = t.audio.duration;
 
-                t.isDowned = false; //마우스 클릭시
-                t.curTime = 0;
+            t.startTick = {
 
-                t.isPlaying = false;
-                
             }
 
             function constructor(){
-                t.width = param.width;
-                t.height = param.height;
-                t.strokeWidth = param.strokeWidth;
-                t.target = document.querySelector(param.target);
-                t.coverUrl = param.coverUrl;
-                t.radius = (t.width * .5) - t.strokeWidth;
+                setData();
+                function setData(){
+                    t.player.target = document.querySelector(param.target);
+                    t.player.size = param.size;
+                    t.player.circumference = 2 * Math.PI * ((t.player.size * .5 - param.handlerSize * .5) - (t.progress.width));
+    
+                    t.cover.target = document.createElement('div');
+                    t.cover.src = param.coverUrl;
+                    t.cover.margin = param.coverMargin;
+    
+                    t.handler.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.handler.size = param.handlerSize;
+                    t.handler.color = param.handlerColor;
 
-                t.audio = new Audio(param.audioUrl);
-                t.duration = t.audio.duration;
-
-                t.curDeg = 0;
-                t.raf;
-
-                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                const coverImg = document.createElement('div');
-
-                t.circumference = 2 * Math.PI * ((t.width * .5) - (t.strokeWidth));
-                
-
-                const coverPad = (t.strokeWidth * 2) + 5;
-                
-                coverImg.style.cssText = `
-                    background: url(${t.coverUrl}) no-repeat center;
-                    width: ${t.width - (coverPad * 2)}px;
-                    height: ${t.height - (coverPad * 2)}px;
-                    border-radius: 50%;
-                    position: absolute;
-                    top: ${coverPad}px;
-                    left: ${coverPad}px;
-                `;
-
-                svg.style.cssText = `
-                    width: ${t.width}px;
-                    height: ${t.height}px;
-                `;
-
-                t.target.style.cssText = `
-                    position: relative;
-                    // display: flex;
-                    // align-items: center;
-                    // justify-content: center;
-                `;
-
-                const playBarTrack = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                const playBar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                const handler = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-
-                t.playBar = playBar;
-
-                playBarTrack.setAttribute('cx', t.width * .5);
-                playBarTrack.setAttribute('cy', t.height * .5);
-                playBarTrack.setAttribute('r', t.radius);
-                playBarTrack.setAttribute('fill', 'none');
-                playBarTrack.setAttribute('stroke', 'rgba(255, 255, 255, .5)');
-                playBarTrack.setAttribute('stroke-width', t.strokeWidth * .5);
-
-                playBar.setAttribute('cx', t.width * .5);
-                playBar.setAttribute('cy', t.height * .5);
-                playBar.setAttribute('r', t.radius);
-                playBar.setAttribute('fill', 'none');
-                playBar.style.transform = 'rotate(-90deg)';
-                playBar.style.transformOrigin = '50%';
-                playBar.setAttribute('stroke', '#005197');
-                playBar.setAttribute('stroke-width', t.strokeWidth);
-                playBar.setAttribute('stroke-linecap', 'round');
-                
-                playBar.setAttribute('stroke-dasharray', t.circumference);
-                playBar.setAttribute('stroke-dashoffset', curOffset(t.curDeg));
-                
-                
-                handler.setAttribute('cx', t.width * .5);
-                handler.setAttribute('cy', t.strokeWidth);
-                handler.setAttribute('r', t.strokeWidth);
-                handler.setAttribute('fill', '#005197');
-
-                t.handler = handler;
+                    t.progress.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.progress.cx = param.size * .5;
+                    t.progress.cy = param.size * .5;
+                    t.progress.width = param.progressWidth;
+                    t.progress.color = param.progressColor;
+                    t.progress.radius = (param.size * .5) - (t.handler.size * .5);
+                    
+                    t.track.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.track.cx = param.size * .5;
+                    t.track.cy = param.size * .5;
+                    t.track.width = param.trackWidth;
+                    t.track.color = param.trackColor;
+                    t.track.radius = (param.size * .5) - (t.handler.size * .5);
 
 
-                svg.appendChild(playBarTrack);
-                svg.appendChild(playBar);
-                svg.appendChild(handler);
-                
-                t.target.appendChild(svg);
-                t.target.appendChild(coverImg);
-
-                
-                t.target.removeEventListener('mousedown', fnc_mouseDownEvent);
-                t.target.removeEventListener('mousemove', fnc_mouseMoveEvent);
-                t.target.removeEventListener('mouseup', fnc_mouseUpEvent);
-                t.target.removeEventListener('touchstart', fnc_mouseDownEvent);
-                t.target.removeEventListener('touchmove', fnc_mouseMoveEvent);
-                t.target.removeEventListener('touchend', fnc_mouseUpEvent);
-                
-                t.target.addEventListener('mousedown', fnc_mouseDownEvent);
-                t.target.addEventListener('mousemove', fnc_mouseMoveEvent);
-                t.target.addEventListener('mouseup', fnc_mouseUpEvent);
-                t.target.addEventListener('touchstart', fnc_mouseDownEvent);
-                t.target.addEventListener('touchmove', fnc_mouseMoveEvent);
-                t.target.addEventListener('touchend', fnc_mouseUpEvent);
-
-                
-
-                function fnc_mouseDownEvent(e){
-                    // e.preventDefault();
-                    t.isDowned = true;
-
-                }
-                function fnc_mouseMoveEvent(e){
-                    e.preventDefault();
-                    if(!t.isDowned) return;
-
-                    const xy = t.target.getBoundingClientRect();
-                    const x = e.touches ? e.touches[0].clientX - xy.x : e.offsetX;
-                    const y = e.touches ? e.touches[0].clientY - xy.y : e.offsetY;
-                    const deg = getDegByDxDy(x, y);
-
-                    t.playing2(deg);
-                }
-                function fnc_mouseUpEvent(e){
-                    e.preventDefault();
-                    if(!t.isDowned) return;
-
-                    const xy = t.target.getBoundingClientRect();
-
-                    const x = e.changedTouches ? e.changedTouches[0].clientX - xy.x : e.offsetX;
-                    const y = e.changedTouches ? e.changedTouches[0].clientY - xy.y : e.offsetY;
-
-                    const deg = getDegByDxDy(x, y);
-                    const percent = deg / 360 * 100;
-                    t.audio.currentTime = t.audio.duration * percent * .01;
-                    t.curTime = t.audio.currentTime;
-
-                    t.isDowned = false;
-                    t.playing(deg);
+                    t.a.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.b.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.abTrack.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.abSection.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.startTick.target = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 }
 
+                setUI();
+                function setUI(){
+                    t.player.target.style.cssText = `position: relative;`;
 
-                function fnc_handler(e){
-                    const x = e.offsetX;
-                    const y = e.offsetY;
-                    console.log(e);
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svg.style.cssText = `
+                        width: ${t.player.size}px;
+                        height: ${t.player.size}px;
+                        vertical-align: top;
+                    `;
+
+                    const imgSize = t.player.size - (t.cover.margin * 2) - t.handler.size;
+                    const imgOffset = t.cover.margin + (t.handler.size * .5);
+                    t.cover.target.style.cssText = `
+                        background: url(${t.cover.src}) no-repeat center;
+                        width: ${imgSize}px;
+                        height: ${imgSize}px;
+                        border-radius: 50%;
+                        position: absolute;
+                        top: ${imgOffset}px;
+                        left: ${imgOffset}px;
+                    `;
+
+                    t.track.target.setAttribute('cx', t.track.cx);
+                    t.track.target.setAttribute('cy', t.track.cy);
+                    t.track.target.setAttribute('r', t.track.radius);
+                    t.track.target.setAttribute('fill', 'none');
+                    t.track.target.setAttribute('stroke', t.track.color);
+                    t.track.target.setAttribute('stroke-width', t.track.width);
+
+                    t.progress.target.setAttribute('cx', t.progress.cx);
+                    t.progress.target.setAttribute('cy', t.progress.cx);
+                    t.progress.target.setAttribute('r', t.progress.radius);
+                    t.progress.target.setAttribute('fill', 'none');
+                    t.progress.target.style.transform = 'rotate(-90deg)';
+                    t.progress.target.style.transformOrigin = '50%';
+                    t.progress.target.setAttribute('stroke', t.progress.color);
+                    t.progress.target.setAttribute('stroke-width', t.progress.width);
+                    t.progress.target.setAttribute('stroke-linecap', 'round');
+                    t.progress.target.setAttribute('stroke-dasharray', t.player.circumference);
+                    t.progress.target.setAttribute('stroke-dashoffset', curOffset(0));
+
+                    t.handler.target.setAttribute('cx', t.player.size * .5);
+                    t.handler.target.setAttribute('cy', t.handler.size * .5);
+                    t.handler.target.setAttribute('r', t.handler.size * .5);
+                    // t.handler.target.setAttribute('fill', '#005197');
+                    t.handler.target.setAttribute('fill', t.handler.color);
+
+                    svg.appendChild(t.track.target);
+                    svg.appendChild(t.progress.target);
+                    svg.appendChild(t.handler.target);
+    
+                    t.player.target.appendChild(t.cover.target);
+                    t.player.target.appendChild(svg);
                 }
 
-                function getDegByDxDy(x, y){
-                    const centerX = t.width * .5;
-                    const centerY = t.height * .5;
+                setFnc();
+                function setFnc(){
+                    t.player.target.removeEventListener('mousedown', fnc_mouseDownEvent);
+                    t.player.target.removeEventListener('mousemove', fnc_mouseMoveEvent);
+                    t.player.target.removeEventListener('mouseup', fnc_mouseUpEvent);
+                    t.player.target.removeEventListener('touchstart', fnc_mouseDownEvent);
+                    t.player.target.removeEventListener('touchmove', fnc_mouseMoveEvent);
+                    t.player.target.removeEventListener('touchend', fnc_mouseUpEvent);
 
-                    const dx = centerX - x;
-                    const dy = centerY - y;
-                    const dxy = Math.sqrt(dx * dx + dy * dy);
+                    t.player.target.addEventListener('mousedown', fnc_mouseDownEvent);
+                    t.player.target.addEventListener('mousemove', fnc_mouseMoveEvent);
+                    t.player.target.addEventListener('mouseup', fnc_mouseUpEvent);
+                    t.player.target.addEventListener('touchstart', fnc_mouseDownEvent);
+                    t.player.target.addEventListener('touchmove', fnc_mouseMoveEvent);
+                    t.player.target.addEventListener('touchend', fnc_mouseUpEvent);
 
-                    let curDeg = 0;
 
-                    if(x > centerX && y < centerY){ //1사분면
-                        curDeg = radianToDeg(Math.acos(dy / dxy));
-                    }else if(x > centerX && y > centerY){   //4사분면
-                        curDeg = 90 - radianToDeg(Math.acos(dx/ dxy)) + 180;
-                    }else if(x < centerX && y < centerY){   //2사분면
-                        curDeg = radianToDeg(Math.acos(dx/ dxy)) + 270;
-                    }else if(x < centerX && y > centerY){   //3사분면
-                        curDeg = 90 - radianToDeg(Math.acos(dy / dxy)) + 270;
-                    }else{
-                        if(x > centerX) curDeg = 90;
-                        else if(x < centerX) curDeg = 270;
-                        else if(y > centerY) curDeg = 180;
-                        else if(y < centerY) curDeg = 0;
+                    function fnc_mouseDownEvent(e){
+                        t.isDowned = true;
                     }
 
-                    // console.log(curDeg);
-                    return curDeg;
-                }
+                    function fnc_mouseMoveEvent(e){
+                        e.preventDefault();
+                        if(!t.isDowned) return;
 
-                if(param.shortCut){
-                    window.addEventListener('keyup', function(){
-                        if(param.shortCut.indexOf('space') > -1) if(event.code === 'Space') t[!t.isPlaying ? 'play' : 'pause']();
+                        const xy = t.player.target.getBoundingClientRect();
+                        const x = e.touches ? e.touches[0].clientX - xy.x : e.offsetX;
+                        const y = e.touches ? e.touches[0].clientY - xy.y : e.offsetY;
+                        const deg = getDegByDxDy(x, y);
 
-                    })
+                        t.handlerUpdate(deg);
+                        t.handlerUpdateUI();
+                    }
+                    function fnc_mouseUpEvent(e){
+                        e.preventDefault();
+                        if(!t.isDowned) return;
+
+                        const xy = t.player.target.getBoundingClientRect();
+                        const x = e.changedTouches ? e.changedTouches[0].clientX - xy.x : e.offsetX;
+                        const y = e.changedTouches ? e.changedTouches[0].clientY - xy.y : e.offsetY;
+
+                        const deg = getDegByDxDy(x, y);
+
+                        console.log(deg);
+                        const percent = deg / 360 * 100;
+
+
+                        // t.audio.currentTime = t.audio.duration * percent * .01;
+                        // t.curTime = t.audio.currentTime;
+
+                        t.isDowned = false;
+                        // t.playing(deg);
+
+
+                        t.progressUpdate(deg);
+                        t.progressUpdateUI();
+                        if(t.isDowned) return;
+                        t.handlerUpdate(deg);
+                        t.handlerUpdateUI();
+                    }
+
                 }
             }
 
+            t.handlerUpdate = (deg) => {
+                t.handler.deg = deg;
+
+                const calced = val => val * t.track.radius + (t.player.size * .5);
+
+                t.handler.cx = calced(Math.sin(degToRadian(deg)));
+                t.handler.cy = t.player.size - calced(Math.cos(degToRadian(deg)));
+            }
+            
+            t.handlerUpdateUI = () => {
+                const target = t.handler.target;
+                target.setAttribute('cx', t.handler.cx);
+                target.setAttribute('cy', t.handler.cy);
+                target.setAttribute('r', t.handler.size * .5);
+                target.setAttribute('fill', t.handler.color);
+            }
+
+            t.progressUpdate = (deg) => {
+                t.progress.deg = deg;
+            }
+            
+            t.progressUpdateUI = () => {
+                const target = t.progress.target;
+                // target.setAttribute('stroke-dasharray', t.player.circumference);
+                console.log(t.progress.deg);
+                target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
+            }
+
+            t.update = (obj) => {}
+
+            
+            
             constructor();
-
-            t.playing = (deg) => {
-                t.curDeg = deg;
-                t.playBar.setAttribute('stroke-dasharray', t.circumference);
-                t.playBar.setAttribute('stroke-dashoffset', curOffset(deg));
-
-                if(t.isDowned) return; 
-
-                t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
-                t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
-            }
             
-            t.playing2 = (deg) => {
-                t.curDeg = deg;
-                t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
-                t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
-            }
-
-            t.perToDeg = (per) => {
-                return per * .01 * 360;
-            }
-
-            t.play = () => {
-                t.isPlaying = true;
-                t.audio.play();
-                playing();
-            }
-            t.pause = () => {
-                t.isPlaying = false;
-                window.cancelAnimationFrame(t.raf);
-                t.audio.pause();
-            }
-            
-            playing = () => {
-                // console.log(t.audio.currentTime);
-                // console.log(t.audio.duration);
-                t.curTime = t.audio.currentTime;
-                t.duration = t.audio.duration;
-                if(t.audio.ended) {
-                    t.isPlaying = false;
-                    t.audio.currentTime = t.curTime = 0;
-                    // t.duration = 0;
-                    t.playing(t.perToDeg(0));
-                    param.playingFnc(t);
-                    return;
-                }
-
-                t.playing(t.perToDeg(t.curTime / t.audio.duration * 100));
-                if(param.playingFnc && typeof param.playingFnc === 'function'){
-                    param.playingFnc(t);
-                }
-                t.raf = window.requestAnimationFrame(playing);
-            }
         }
-    
 
-        function playBtn(){
-            player1[!player1.isPlaying ? 'play' : 'pause']();
-        }
     </script>
 </body>
 </html>

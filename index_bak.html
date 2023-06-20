@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>audioPlayer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./normalize.css">
+
+    <style>
+        html, body{height: 100%; background: linear-gradient(to bottom, #005197, #fff) no-repeat;}
+        *{box-sizing: border-box;}
+
+        .wrapper{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 0 0;
+            flex-direction: column;
+        }
+
+        .player{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+
+        .time{width: 100px; text-align: center; color: rgba(255, 255, 255, .8);}
+
+        @media(max-width: 520px){
+            .player{flex-direction: column;}
+            .cur-time{order: 2;}
+            .player1{order: 1;}
+            .total-time{order: 0;}
+        }
+
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="player">
+            <div id="curTime" class="time cur-time"></div>
+            <div id="player1" class="player1"></div>
+            <div id="totalTime" class="time total-time"></div>
+        </div>
+        <div class="btns1">
+            <button onclick="playBtn()">play</button>
+        </div>
+    </div>
+
+    <script>
+        const totalTime = document.querySelector('#totalTime');
+        const curTime = document.querySelector('#curTime');
+
+        const fillZero = (num, digit) =>  num < 10 ** digit ? String(10 ** digit + num).substr(1) : num;    //padStart로 대체 가능
+        const sTohhmmss = s =>  `${fillZero(parseInt(s / 360), 2)} : ${fillZero(parseInt(s / 60), 2)} : ${fillZero((Math.round(s) % 60), 2)}`;
+
+        const player1 = new Player1({
+            width: 468,
+            height: 468,     
+            strokeWidth: 5,
+            trackStrokeWidth: 3,
+            target: '#player1',
+            coverUrl: 'https://www.bookswage.com/files/877cac95f75049c39f03c2f499ff81311686557110717/QxIuQIIcxD.png',
+            audioUrl: 'audio-sample.mp3',
+            shortCut: ['space'],
+            coverPad: 17,
+            handlerSize: 8,
+            playingFnc: (info) => {
+                // totalTime.innerHTML = sTohhmmss(info.duration);
+                curTime.innerHTML = sTohhmmss(info.curTime);
+            },
+            initFnc: (info) => {
+                totalTime.innerHTML = sTohhmmss(info.duration);
+                curTime.innerHTML = sTohhmmss(info.curTime);
+            },
+            resizeFnc: () => {
+
+            }
+        });
+
+
+        function Player1 (param){
+            const t = this;
+
+            t.width = 0;
+            t.height = 0;
+            t.radius = 0;
+            t.strokeWidth = 0;
+            t.target;
+            t.playBar;
+            t.coverUrl = '';
+            t.circumference = 0;
+            t.curDeg = 0;
+            // t.audioUrl = param.audioUrl;
+            t.audio = '';
+
+            t.isDowned = false; //마우스 클릭시
+            t.curTime = 0;
+            t.raf;
+            t.isPlaying = false;
+            t.duration = 0;
+
+
+            const curOffset = deg => t.circumference * (1 - (deg / 360));
+            const radianToDeg  = r => r * 180 / Math.PI;
+            const degToRadian  = deg => deg * Math.PI / 180;
+            
+
+            t.init = obj => {
+                window.cancelAnimationFrame(t.raf);
+
+                t.width = obj.width || t.width;
+                t.height = obj.height || t.height;
+                t.radius = (t.width * .5) - t.strokeWidth;
+                t.strokeWidth = obj.strokeWidth || t.strokeWidth;
+                t.coverUrl = obj.coverUrl || t.coverUrl;
+                t.circumference = 2 * Math.PI * ((t.width * .5) - (t.strokeWidth));
+                t.curDeg = 0;
+                t.audio = new Audio(obj.audioUrl);
+                t.duration = t.audio.duration;
+
+                t.isDowned = false; //마우스 클릭시
+                t.curTime = 0;
+
+                t.isPlaying = false;
+            }
+
+            function constructor(){
+                t.width = param.width;
+                t.height = param.height;
+                t.strokeWidth = param.strokeWidth;
+                t.target = document.querySelector(param.target);
+                t.coverUrl = param.coverUrl;
+                t.radius = (t.width * .5) - t.strokeWidth;
+
+                t.audio = new Audio(param.audioUrl);
+                t.audio.onloadeddata = () => {
+                    t.duration = t.audio.duration;
+                    if(param.initFnc && typeof param.initFnc === 'function') param.initFnc(t);
+                }
+
+
+                t.curDeg = 0;
+                t.raf;
+
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                const coverImg = document.createElement('div');
+
+                t.circumference = 2 * Math.PI * ((t.width * .5) - (t.strokeWidth));
+                
+
+                const coverPad = param.coverPad || (t.strokeWidth * 2) + 5;
+                
+                coverImg.style.cssText = `
+                    background: url(${t.coverUrl}) no-repeat center;
+                    width: ${t.width - (coverPad * 2)}px;
+                    height: ${t.height - (coverPad * 2)}px;
+                    border-radius: 50%;
+                    position: absolute;
+                    top: ${coverPad}px;
+                    left: ${coverPad}px;
+                `;
+
+                svg.style.cssText = `
+                    width: ${t.width}px;
+                    height: ${t.height}px;
+                `;
+
+                t.target.style.cssText = `
+                    position: relative;
+                    // display: flex;
+                    // align-items: center;
+                    // justify-content: center;
+                `;
+
+                const playBarTrack = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                const playBar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                const handler = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+                t.playBar = playBar;
+
+                playBarTrack.setAttribute('cx', t.width * .5);
+                playBarTrack.setAttribute('cy', t.height * .5);
+                playBarTrack.setAttribute('r', t.radius);
+                playBarTrack.setAttribute('fill', 'none');
+                playBarTrack.setAttribute('stroke', 'rgba(255, 255, 255, .5)');
+                playBarTrack.setAttribute('stroke-width', param.trackStrokeWidth || t.strokeWidth * .5);
+
+                playBar.setAttribute('cx', t.width * .5);
+                playBar.setAttribute('cy', t.height * .5);
+                playBar.setAttribute('r', t.radius);
+                playBar.setAttribute('fill', 'none');
+                playBar.style.transform = 'rotate(-90deg)';
+                playBar.style.transformOrigin = '50%';
+                playBar.setAttribute('stroke', '#005197');
+                playBar.setAttribute('stroke-width', t.strokeWidth);
+                playBar.setAttribute('stroke-linecap', 'round');
+                
+                playBar.setAttribute('stroke-dasharray', t.circumference);
+                playBar.setAttribute('stroke-dashoffset', curOffset(t.curDeg));
+
+                console.log(t.circumference, curOffset(t.curDeg))
+                
+                
+                handler.setAttribute('cx', t.width * .5);
+                handler.setAttribute('cy', t.strokeWidth);
+                handler.setAttribute('r', param.handlerSize || t.strokeWidth);
+                handler.setAttribute('fill', '#005197');
+
+                t.handler = handler;
+
+
+                svg.appendChild(playBarTrack);
+                svg.appendChild(playBar);
+                svg.appendChild(handler);
+                
+                t.target.appendChild(svg);
+                t.target.appendChild(coverImg);
+
+                
+                t.target.removeEventListener('mousedown', fnc_mouseDownEvent);
+                t.target.removeEventListener('mousemove', fnc_mouseMoveEvent);
+                t.target.removeEventListener('mouseup', fnc_mouseUpEvent);
+                t.target.removeEventListener('touchstart', fnc_mouseDownEvent);
+                t.target.removeEventListener('touchmove', fnc_mouseMoveEvent);
+                t.target.removeEventListener('touchend', fnc_mouseUpEvent);
+                
+                t.target.addEventListener('mousedown', fnc_mouseDownEvent);
+                t.target.addEventListener('mousemove', fnc_mouseMoveEvent);
+                t.target.addEventListener('mouseup', fnc_mouseUpEvent);
+                t.target.addEventListener('touchstart', fnc_mouseDownEvent);
+                t.target.addEventListener('touchmove', fnc_mouseMoveEvent);
+                t.target.addEventListener('touchend', fnc_mouseUpEvent);
+
+                
+
+                function fnc_mouseDownEvent(e){
+                    // e.preventDefault();
+                    t.isDowned = true;
+
+                }
+                function fnc_mouseMoveEvent(e){
+                    e.preventDefault();
+                    if(!t.isDowned) return;
+
+                    const xy = t.target.getBoundingClientRect();
+                    const x = e.touches ? e.touches[0].clientX - xy.x : e.offsetX;
+                    const y = e.touches ? e.touches[0].clientY - xy.y : e.offsetY;
+                    const deg = getDegByDxDy(x, y);
+
+                    t.playing2(deg);
+                }
+                function fnc_mouseUpEvent(e){
+                    e.preventDefault();
+                    if(!t.isDowned) return;
+
+                    const xy = t.target.getBoundingClientRect();
+
+                    const x = e.changedTouches ? e.changedTouches[0].clientX - xy.x : e.offsetX;
+                    const y = e.changedTouches ? e.changedTouches[0].clientY - xy.y : e.offsetY;
+
+                    const deg = getDegByDxDy(x, y);
+                    const percent = deg / 360 * 100;
+                    t.audio.currentTime = t.audio.duration * percent * .01;
+                    t.curTime = t.audio.currentTime;
+
+                    t.isDowned = false;
+                    t.playing(deg);
+                }
+
+
+                // function fnc_handler(e){
+                //     const x = e.offsetX;
+                //     const y = e.offsetY;
+                //     console.log(e);
+                // }
+
+                function getDegByDxDy(x, y){
+                    const centerX = t.width * .5;
+                    const centerY = t.height * .5;
+
+                    const dx = centerX - x;
+                    const dy = centerY - y;
+                    const dxy = Math.sqrt(dx * dx + dy * dy);
+
+                    let curDeg = 0;
+
+                    if(x > centerX && y < centerY){ //1사분면
+                        curDeg = radianToDeg(Math.acos(dy / dxy));
+                    }else if(x > centerX && y > centerY){   //4사분면
+                        curDeg = 90 - radianToDeg(Math.acos(dx/ dxy)) + 180;
+                    }else if(x < centerX && y < centerY){   //2사분면
+                        curDeg = radianToDeg(Math.acos(dx/ dxy)) + 270;
+                    }else if(x < centerX && y > centerY){   //3사분면
+                        curDeg = 90 - radianToDeg(Math.acos(dy / dxy)) + 270;
+                    }else{
+                        if(x > centerX) curDeg = 90;
+                        else if(x < centerX) curDeg = 270;
+                        else if(y > centerY) curDeg = 180;
+                        else if(y < centerY) curDeg = 0;
+                    }
+
+                    // console.log(curDeg);
+                    return curDeg;
+                }
+
+                if(param.shortCut){
+                    window.addEventListener('keyup', function(){
+                        if(param.shortCut.indexOf('space') > -1) if(event.code === 'Space') t[!t.isPlaying ? 'play' : 'pause']();
+
+                    })
+                }
+            }
+
+            constructor();
+
+            t.playing = (deg) => {
+                t.curDeg = deg;
+                t.playBar.setAttribute('stroke-dasharray', t.circumference);
+                t.playBar.setAttribute('stroke-dashoffset', curOffset(deg));
+
+                if(t.isDowned) return; 
+
+                t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
+                t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
+            }
+            
+            t.playing2 = (deg) => {
+                t.curDeg = deg;
+                t.handler.setAttribute('cx', Math.sin(degToRadian(deg)) * t.radius + (t.width * .5));
+                t.handler.setAttribute('cy', t.height - (Math.cos(degToRadian(deg)) * t.radius + (t.height * .5)));
+            }
+
+            t.perToDeg = (per) => {
+                return per * .01 * 360;
+            }
+
+            t.play = () => {
+                t.isPlaying = true;
+                t.audio.play();
+                playing();
+            }
+            t.pause = () => {
+                t.isPlaying = false;
+                window.cancelAnimationFrame(t.raf);
+                t.audio.pause();
+            }
+            
+            playing = () => {
+                // console.log(t.audio.currentTime);
+                // console.log(t.audio.duration);
+                t.curTime = t.audio.currentTime;
+                t.duration = t.audio.duration;
+                if(t.audio.ended) {
+                    t.isPlaying = false;
+                    t.audio.currentTime = t.curTime = 0;
+                    // t.duration = 0;
+                    t.playing(t.perToDeg(0));
+                    param.playingFnc(t);
+                    return;
+                }
+
+                t.playing(t.perToDeg(t.curTime / t.audio.duration * 100));
+                if(param.playingFnc && typeof param.playingFnc === 'function'){
+                    param.playingFnc(t);
+                }
+                t.raf = window.requestAnimationFrame(playing);
+            }
+        }
+    
+
+        function playBtn(){
+            player1[!player1.isPlaying ? 'play' : 'pause']();
+        }
+    </script>
+</body>
+</html>
