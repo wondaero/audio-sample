@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+    <defs>
+        <clipPath id="ngvflfgxda">
+            <path data-name="사각형 327" transform="translate(.105 -.428)" style="fill:#fff" d="M0 0h28v28H0z"/>
+        </clipPath>
+    </defs>
+    <g transform="translate(-.105 .428)" style="clip-path:url(#ngvflfgxda)">
+        <g data-name="그룹 78" transform="rotate(45 15.937 25.822)">
+            <rect data-name="사각형 321" width="1" height="12.85" rx=".5" transform="rotate(-2 18.01 -165.313)"/>
+            <path data-name="합치기 17" d="M12.235 5.93a.5.5 0 0 1-.707.706L6.29 1.4 1.052 6.636a.5.5 0 1 1-.707-.707L5.931.343a.519.519 0 0 1 .723 0z"/>
+        </g>
+        <g data-name="그룹 77" transform="rotate(-135 9.252 14.59)">
+            <rect data-name="사각형 321" width="1" height="12.85" rx=".5" transform="rotate(-2 18.01 -165.313)"/>
+            <path data-name="합치기 17" d="M12.235 5.93a.5.5 0 0 1-.707.706L6.29 1.4 1.052 6.636a.5.5 0 1 1-.707-.707L5.931.343a.519.519 0 0 1 .723 0z"/>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <g data-name="타원 1" style="stroke:#cbcbcb;stroke-width:1.5px;fill:none">
+        <circle cx="32" cy="32" r="32" style="stroke:none"/>
+        <circle cx="32" cy="32" r="31.25" style="fill:none"/>
+    </g>
+    <path class="play-btn" data-name="다각형 1" d="M14.032 2.278a2 2 0 0 1 3.255 0L29.06 18.761a2 2 0 0 1-1.627 3.162H3.886a2 2 0 0 1-1.627-3.162z" transform="rotate(90 14.33 30.67)" style="fill:#a4727e"/>
+</svg>

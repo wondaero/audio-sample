@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>audioPlayer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./normalize.css">
+</head>
+<body>
+    <script>
+        function Test () {
+            const t = this;
+
+            t.change = [];
+
+            t.a = {
+                a: 2,
+                b: 3
+                
+            }
+            t.b = {
+                a: 2,
+                b: 0
+                
+            }
+            t.c = {
+                a: 2,
+                b: 0,
+                c: 'asdf'
+            }
+
+            t.progress = {
+                deg: 0
+            }
+
+            t.update = (obj, separator, ui) => {    //최대 2depth
+                t.change.length = 0;
+
+                for(let key in obj){
+
+                    t.change.push(key);
+                    const keyNm = key.split(separator);
+                    t[keyNm[0]][keyNm[1]] = obj[key];
+                }
+
+                if(ui) t.updateUI(separator);
+            }
+            
+
+            t.updateUI = (s) => {
+                t.change.forEach(k => {
+                    const keyNm = k.split(s);
+
+                    if(keyNm[0] === 'progress' && keyNm[1] === 'deg'){
+                        t.keyNm[0].target.setAttribute();
+                    }
+
+                })
+
+            }
+        }
+
+        const test = new Test();
+
+        test.update({
+            progress_deg: 33,
+        }, '_', true);
+    </script>
+
+</body>
+</html>

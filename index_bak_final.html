@@ -387,37 +387,6 @@
 
             }
 
-            t.change = [];
-
-
-            t.update = (obj, separator, ui) => {
-                t.change.length = 0;
-
-                for(let key in obj){
-                    const keyNm = key.split(separator);
-
-                    t[keyNm[0]][keyNm[1]] = obj[key];
-                    t.change.push(key);
-                }
-
-                if(ui) t.updateUI(separator);
-            }
-
-            t.updateUI = (s) => {
-                t.change.forEach((k) => {
-                    const keyNm = key.split(separator);
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){
-                        t.progress.target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
-                        return true;
-                    }
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                })
-            }
-
             t.resize = (param) => {
                 t.handler.size = param.handlerSize;
 
@@ -669,7 +638,7 @@
 
             }
 
-            
+            t.update = (obj) => {}
 
             
             

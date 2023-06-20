@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="18.923" height="22.319" viewBox="0 0 18.923 22.319">
+    <g data-name="그룹 2487">
+        <g data-name="다각형 4" style="fill:#404040">
+            <path d="M3.844 14.923a.984.984 0 0 1-.887-.538.984.984 0 0 1 .068-1.036L10.34 2.911a.988.988 0 0 1 .82-.426c.33 0 .629.155.818.426l7.316 10.438a.984.984 0 0 1 .068 1.036.984.984 0 0 1-.887.538H3.844z" style="stroke:none" transform="rotate(-90 12.66 9.66)"/>
+            <path d="M11.16 3.485 3.843 13.923h14.63L11.16 3.485m0-2c.62 0 1.24.284 1.638.852l7.316 10.438c.929 1.326-.02 3.148-1.638 3.148H3.844c-1.619 0-2.567-1.822-1.638-3.148L9.522 2.337a1.987 1.987 0 0 1 1.637-.852z" style="fill:#404040;stroke:none" transform="rotate(-90 12.66 9.66)"/>
+        </g>
+        <path data-name="선 3" transform="translate(1.5 4.659)" style="fill:none;stroke:#404040;stroke-linecap:round;stroke-width:3px" d="M0 0v13"/>
+    </g>
+</svg>
