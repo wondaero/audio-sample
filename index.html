@@ -278,6 +278,36 @@
             coverMargin: 17
         });
 
+        let onceExe = 1;    //resize시 같은범위에 감지
+
+        const resize = () => {
+            const w = window.innerWidth;
+
+            if(w < 501){
+                if(onceExe !== 'mo'){
+                    onceExe = 'mo';
+                    player1.update({
+                        player_size: 285,
+                        handler_size: 10
+                    }, '_', true)
+                }
+                
+            }else{
+                if(onceExe !== 'pc'){
+                    onceExe = 'pc';
+                    player1.update({
+                        player_size: 468,
+                        handler_size: 16
+                    }, '_', true)
+                }
+            }
+        }
+        resize();
+        window.onresize = resize;
+
+
+        
+
 
         function Player1 (param){
             const t = this;
@@ -356,7 +386,8 @@
                 width: 0,
                 color: 0,
                 cx: 0,
-                cy: 0
+                cy: 0,
+                strokeWidth: 0
             }
             
             t.progress = {
@@ -369,7 +400,8 @@
                 a: 0,
                 b: 0,
                 deg: 0,
-                change: []
+                change: [],
+                strokeWidth: 0
             }
 
             t.handler = {
@@ -379,7 +411,8 @@
                 deg: 0,
                 cx: 0,
                 cy: 0,
-                change: []
+                change: [],
+                strokeWidth: 0
             }
 
 
@@ -396,8 +429,68 @@
                 for(let key in obj){
                     const keyNm = key.split(separator);
 
-                    t[keyNm[0]][keyNm[1]] = obj[key];
+                    const key1 = keyNm[0];
+                    const key2 = keyNm[1];
+
+                    t[key1][key2] = obj[key];
                     t.change.push(key);
+
+                    if(key1 === 'player'){
+                        if(key2 === 'size'){
+
+                            t.player.size = obj[key];
+
+                            const playerHalfSize = t.player.size * .5;
+                            const handlerHalfSize = t.handler.size * .5;
+                            const calced = val => val * t.track.radius + playerHalfSize;
+
+                            // t.player.circumference = 2 * Math.PI * ((playerHalfSize - handlerHalfSize) - (t.progress.width));
+                            t.player.circumference = 2 * Math.PI * (playerHalfSize - handlerHalfSize);
+
+                            t.progress.cx = playerHalfSize;
+                            t.progress.cy = playerHalfSize;
+                            t.progress.radius = (playerHalfSize) - handlerHalfSize;
+
+                            t.track.cx = playerHalfSize;
+                            t.track.cy = playerHalfSize;
+                            t.track.radius = playerHalfSize - handlerHalfSize;
+
+                            t.handler.cx = calced(Math.sin(degToRadian(t.handler.deg)));
+                            t.handler.cy = t.player.size - calced(Math.cos(degToRadian(t.handler.deg)));
+                        }
+                    }
+
+                    if(key1 === 'handler'){
+                        if(key2 === 'size'){
+                            t.handler.size = obj[key];
+
+                            const playerHalfSize = t.player.size * .5;
+                            const handlerHalfSize = t.handler.size * .5;
+                            const calced = val => val * t.track.radius + playerHalfSize;
+
+                            t.player.circumference = 2 * Math.PI * (playerHalfSize - handlerHalfSize);
+                            t.progress.radius = (playerHalfSize) - handlerHalfSize;
+                            t.track.radius = playerHalfSize - handlerHalfSize;
+
+                            t.handler.cx = calced(Math.sin(degToRadian(t.handler.deg)));
+                            t.handler.cy = t.player.size - calced(Math.cos(degToRadian(t.handler.deg)));
+                        }else if(key2 === 'deg'){
+                            const playerHalfSize = t.player.size * .5;
+                            const calced = val => val * t.track.radius + playerHalfSize;
+
+                            t.handler.deg = obj[key];
+                            t.handler.cx = calced(Math.sin(degToRadian(obj[key])));
+                            t.handler.cy = t.player.size - calced(Math.cos(degToRadian(obj[key])));
+                        }
+                    }
+
+                    if(key1 === 'progress'){
+                        if(key2 === 'deg'){
+                            t.progress.deg = obj[key];
+                        }
+                    }
+
+
                 }
 
                 if(ui) t.updateUI(separator);
@@ -405,67 +498,73 @@
 
             t.updateUI = (s) => {
                 t.change.forEach((k) => {
-                    const keyNm = key.split(separator);
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){
-                        t.progress.target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
-                        return true;
+                    const keyNm = k.split(s);
+
+                    const key1 = keyNm[0];
+                    const key2 = keyNm[1];
+                    
+                    if(key1 === 'player'){
+                        if(key2 === 'size'){
+                            const playerHalfSize = t.player.size * .5;
+                            const handlerHalfSize = t.handler.size * .5;
+                            const imgSize = t.player.size - (t.cover.margin * 2) - t.handler.size;
+                            const imgOffset = t.cover.margin + (t.handler.size * .5);
+
+                            document.querySelector('svg').style.cssText = `
+                                width: ${t.player.size}px;
+                                height: ${t.player.size}px;
+                                vertical-align: top;
+                            `;
+
+                            t.cover.target.style.cssText = `
+                                // background: url(${t.cover.src}) no-repeat center;
+                                background: #a4727e;
+                                width: ${imgSize}px;
+                                height: ${imgSize}px;
+                                border-radius: 50%;
+                                position: absolute;
+                                top: ${imgOffset}px;
+                                left: ${imgOffset}px;
+                            `;
+
+                            t.track.target.setAttribute('cx', t.track.cx);
+                            t.track.target.setAttribute('cy', t.track.cy);
+                            t.track.target.setAttribute('r', t.track.radius);
+
+                            t.progress.target.setAttribute('cx', t.progress.cx);
+                            t.progress.target.setAttribute('cy', t.progress.cy);
+                            t.progress.target.setAttribute('r', t.progress.radius);
+                            t.progress.target.setAttribute('stroke-dasharray', t.player.circumference);
+                            t.progress.target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
+
+                            t.handler.target.setAttribute('cx', t.handler.cx);
+                            t.handler.target.setAttribute('cy', t.handler.cy);
+                            t.handler.target.setAttribute('r', t.handler.size * .5);
+                        }
                     }
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
-                    if(t[keyNm[0]] === 'progress' && [keyNm[1]] === 'deg'){}
+
+                    if(key1 === 'handler'){
+                        if(key2 === 'size'){
+                            t.progress.target.setAttribute('r', t.progress.radius);
+                            t.track.target.setAttribute('r', t.track.radius);
+
+                            t.handler.target.setAttribute('cx', t.handler.cx);
+                            t.handler.target.setAttribute('cy', t.handler.cy);
+                            t.handler.target.setAttribute('r', t.handler.size * .5);
+                        }else if(key2 === 'deg'){
+                            t.handler.target.setAttribute('cx', t.handler.cx);
+                            t.handler.target.setAttribute('cy', t.handler.cy);
+                        }
+                    };
+
+                    if(key1 === 'progress'){
+                        if(key2 === 'deg'){
+                            t.progress.target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
+                            return true;
+                        }
+                    }
+
                 })
-            }
-
-            t.resize = (param) => {
-                t.handler.size = param.handlerSize;
-
-                t.player.size = param.size;
-                t.player.circumference = 2 * Math.PI * ((t.player.size * .5 - t.handler.size * .5) - (t.progress.width));
-                
-
-                t.progress.cx = t.player.size * .5;
-                t.progress.cy = t.player.size * .5;
-                t.progress.radius = (t.player.size * .5) - (t.handler.size * .5);
-
-                t.track.cx = param.size * .5;
-                t.track.cy = param.size * .5;
-                t.track.radius = (param.size * .5) - (t.handler.size * .5);
-
-
-                document.querySelector('svg').style.cssText = `
-                    width: ${t.player.size}px;
-                    height: ${t.player.size}px;
-                    vertical-align: top;
-                `;
-
-                const imgSize = t.player.size - (t.cover.margin * 2) - t.handler.size;
-                const imgOffset = t.cover.margin + (t.handler.size * .5);
-                t.cover.target.style.cssText = `
-                    // background: url(${t.cover.src}) no-repeat center;
-                    background: #a4727e;
-                    width: ${imgSize}px;
-                    height: ${imgSize}px;
-                    border-radius: 50%;
-                    position: absolute;
-                    top: ${imgOffset}px;
-                    left: ${imgOffset}px;
-                `;
-
-                t.track.target.setAttribute('cx', t.track.cx);
-                t.track.target.setAttribute('cy', t.track.cy);
-                t.track.target.setAttribute('r', t.track.radius);
-
-                t.progress.target.setAttribute('cx', t.progress.cx);
-                t.progress.target.setAttribute('cy', t.progress.cx);
-                t.progress.target.setAttribute('r', t.progress.radius);
-                t.progress.target.setAttribute('stroke-dasharray', t.player.circumference);
-                t.progress.target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
-
-                t.handler.target.setAttribute('cx', t.player.size * .5);
-                t.handler.target.setAttribute('cy', t.handler.size * .5);
-                t.handler.target.setAttribute('r', t.handler.size * .5);
             }
 
             function constructor(){
@@ -473,7 +572,8 @@
                 function setData(){
                     t.player.target = document.querySelector(param.target);
                     t.player.size = param.size;
-                    t.player.circumference = 2 * Math.PI * ((t.player.size * .5 - param.handlerSize * .5) - (t.progress.width));
+                    // t.player.circumference = 2 * Math.PI * ((t.player.size * .5 - param.handlerSize * .5) - (t.progress.width));
+                    t.player.circumference = 2 * Math.PI * ((t.player.size * .5 - param.handlerSize * .5));
     
                     t.cover.target = document.createElement('div');
                     t.cover.src = param.coverUrl;
@@ -506,6 +606,7 @@
                 }
 
                 setUI();
+
                 function setUI(){
                     t.player.target.style.cssText = `position: relative;`;
 
@@ -592,8 +693,7 @@
                         const y = e.touches ? e.touches[0].clientY - xy.y : e.offsetY;
                         const deg = getDegByDxDy(x, y);
 
-                        t.handlerUpdate({deg: deg});
-                        t.handlerUpdateUI();
+                        t.update({handler_deg: deg}, '_', true);
                     }
                     function fnc_mouseUpEvent(e){
                         e.preventDefault();
@@ -616,62 +716,13 @@
                         // t.playing(deg);
 
 
-                        t.progressUpdate({deg: deg});
-                        t.progressUpdateUI();
+                        t.update({progress_deg: deg}, '_', true);
                         if(t.isDowned) return;
-                        t.handlerUpdate({deg: deg});
-                        t.handlerUpdateUI();
+                        t.update({handler_deg: deg}, '_', true);
                     }
 
                 }
             }
-
-            t.handlerUpdate = (obj) => {
-                t.handler.change.length = 0;
-
-                for(let key in obj){
-                    if(key === 'deg'){
-                        const calced = val => val * t.track.radius + (t.player.size * .5);
-                        t.handler.cx = calced(Math.sin(degToRadian(obj[key])));
-                        t.handler.cy = t.player.size - calced(Math.cos(degToRadian(obj[key])));
-
-                        t.handler.change.push('cx');
-                        t.handler.change.push('cy');
-                    }
-
-                    t.handler[key] = obj[key];
-                    t.handler.change.push(key);
-                }
-            }
-            
-            t.handlerUpdateUI = () => {
-                const target = t.handler.target;
-
-                t.handler.change.forEach((attr) => {
-                    if(attr !== 'deg') target.setAttribute(attr, t.handler[attr]);
-                })
-            }
-
-            t.progressUpdate = (obj) => {
-                t.progress.change.length = 0;
-
-                for(let key in obj){
-                    if(key === 'deg'){}
-                    t.progress[key] = obj[key];
-                    t.progress.change.push(key);
-                }
-            }
-            
-            t.progressUpdateUI = () => {
-                t.progress.change.forEach((attr) => {
-                    if(attr === 'deg') t.progress.target.setAttribute('stroke-dashoffset', curOffset(t.progress.deg));
-                });
-
-            }
-
-            
-
-            
             
             constructor();
             
