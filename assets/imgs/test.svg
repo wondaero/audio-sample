@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(3 3)">
+        <circle cx="60" cy="60" r="30" style="fill:#fff; stroke-width:3px; stroke:#a4727e;"/>
+        <!-- <path data-name="패스 701" d="M1.265-5.6c.112-.392.224-.821.321-1.233h.025c.107.408.209.841.326 1.233l.112.413h-.9zM-.04-3.633h.765L.99-4.6h1.223l.265.968h.79L2.055-7.41h-.887z" transform="translate(2.386 9.449)" style="fill:#a4727e;"/> -->
+        <!-- <text data-name="10" transform="translate(22.167 27.594)" style="fill:#404040;font-size:16px;font-family:NotoSansCJKkr-Black,Noto Sans CJK KR;font-weight:800;letter-spacing:-.02em">A</text> -->
+        <text x="60" y="60" dx="-10" dy="10" style="fill:red;font-weight:900; font-size:30">B</text>
+        <text x="30" y="30" style="fill:#404040;font-weight:900;">B</text>
+        <text x="30" y="30" style="fill:#404040;font-weight:900;">A</text>
+        <text x="30" y="30" style="fill:#404040;font-weight:900;">B</text>
+    </g>
+
+
+</svg>
+
+
+
+

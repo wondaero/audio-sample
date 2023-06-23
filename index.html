@@ -236,7 +236,6 @@
             /* .btns2{justify-content: space-between; width: 100%;} */
             .player{margin-bottom: 32px;}
             .time{
-                color: rgba(255, 255, 255, .7);
                 font-size: 0.6875rem;
                 letter-spacing: -.22px;
             }
@@ -528,9 +527,11 @@
                 return curDeg;
             }
 
-            t.isDowned = false; //마우스 클릭시
 
+            //상태값
+            t.isDowned = false; //마우스 클릭시
             t.raf;
+            t.isAB = false;
 
             t.player = {
                 size: 0,
@@ -667,6 +668,9 @@
                             t.handler.deg = obj[key];
                             t.handler.cx = calced(Math.sin(degToRadian(obj[key])));
                             t.handler.cy = t.player.size - calced(Math.cos(degToRadian(obj[key])));
+
+                            t.a.target.setAttribute('transform', `translate(${t.handler.cx - t.handler.size * .5} ${t.handler.cy - t.handler.size * .5})`);
+                            t.b.target.setAttribute('transform', `translate(${t.handler.cx - t.handler.size * .5} ${t.handler.cy - t.handler.size * .5})`);
                         }
                     }
 
@@ -795,6 +799,7 @@
                     t.handler.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     t.handler.size = param.handlerSize;
 
+
                     t.progress.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     t.progress.cx = param.size * .5;
                     t.progress.cy = param.size * .5;
@@ -807,9 +812,13 @@
                     t.track.width = param.trackWidth;
                     t.track.radius = (param.size * .5) - (t.handler.size * .5);
 
+                    
+                    t.a.target = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    t.a.size = param.handlerSize;
 
-                    t.a.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    t.b.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    t.b.target = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    t.b.size = param.handlerSize;
+
                     t.abTrack.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     t.abSection.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     t.startTick.target = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -856,6 +865,7 @@
                         vertical-align: top;
                     `;
 
+
                     const imgSize = t.player.size - (t.cover.margin * 2) - t.handler.size;
                     const imgOffset = t.cover.margin + (t.handler.size * .5);
                     t.cover.target.classList.add('cover');
@@ -890,15 +900,79 @@
                     t.progress.target.setAttribute('stroke-dasharray', t.player.circumference);
                     t.progress.target.setAttribute('stroke-dashoffset', curOffset(0));
 
-
                     t.handler.target.classList.add('handler');
                     t.handler.target.setAttribute('cx', t.player.size * .5);
                     t.handler.target.setAttribute('cy', t.handler.size * .5);
                     t.handler.target.setAttribute('r', t.handler.size * .5);
 
+                    t.a.target.classList.add('handler-a');
+                    t.a.target.setAttribute('transform', `translate(${t.player.size * .5 - t.handler.size * .5} 0)`);
+                    t.a.target.style.display = 'none';
+
+                    const aCircleOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    aCircleOuter.setAttribute('cx', t.handler.size * .5);
+                    aCircleOuter.setAttribute('cy', t.handler.size * .5);
+                    aCircleOuter.setAttribute('r', t.handler.size * .5);
+                    aCircleOuter.style.cssText = `fill: var(--pointColor);`;
+                    const aCircleInner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    aCircleInner.setAttribute('cx', t.handler.size * .5);
+                    aCircleInner.setAttribute('cy', t.handler.size * .5);
+                    aCircleInner.setAttribute('r', t.handler.size * .5 - 3);
+                    aCircleInner.style.cssText = `fill: #fff;`;
+                    
+                    const aText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    aText.innerHTML = 'A';
+                    aText.setAttribute('x', t.handler.size * .5);
+                    aText.setAttribute('y', t.handler.size * .5);
+                    aText.setAttribute('dx', t.handler.size / -6);
+                    aText.setAttribute('dy', t.handler.size / 6);
+                    aText.style.cssText = `
+                        fill:var(--pointColor);
+                        font-weight: 900;
+                        font-size: ${t.handler.size * .5};
+                    `;
+                    
+                    t.a.target.appendChild(aCircleOuter);
+                    t.a.target.appendChild(aCircleInner);
+                    t.a.target.appendChild(aText);
+
+                    t.b.target.classList.add('handler-b');
+                    t.b.target.setAttribute('transform', `translate(${t.player.size * .5 - t.handler.size * .5} 0)`);
+                    t.b.target.style.display = 'none';
+
+                    const bCircleOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    bCircleOuter.setAttribute('cx', t.handler.size * .5);
+                    bCircleOuter.setAttribute('cy', t.handler.size * .5);
+                    bCircleOuter.setAttribute('r', t.handler.size * .5);
+                    bCircleOuter.style.cssText = `fill: var(--pointColor);`;
+                    const bCircleInner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    bCircleInner.setAttribute('cx', t.handler.size * .5);
+                    bCircleInner.setAttribute('cy', t.handler.size * .5);
+                    bCircleInner.setAttribute('r', t.handler.size * .5 - 3);
+                    bCircleInner.style.cssText = `fill: #fff;`;
+                    
+                    const bText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    bText.innerHTML = 'B';
+                    bText.setAttribute('x', t.handler.size * .5);
+                    bText.setAttribute('y', t.handler.size * .5);
+                    bText.setAttribute('dx', t.handler.size / -6);
+                    bText.setAttribute('dy', t.handler.size / 6);
+                    bText.style.cssText = `
+                        fill:var(--pointColor);
+                        font-weight: 900;
+                        font-size: ${t.handler.size * .5};
+                    `;
+                    
+                    t.b.target.appendChild(bCircleOuter);
+                    t.b.target.appendChild(bCircleInner);
+                    t.b.target.appendChild(bText);
+
+
                     svg.appendChild(t.track.target);
                     svg.appendChild(t.progress.target);
                     svg.appendChild(t.handler.target);
+                    svg.appendChild(t.a.target);
+                    svg.appendChild(t.b.target);
     
                     t.player.target.appendChild(t.cover.target);
                     t.player.target.appendChild(svg);
@@ -1066,6 +1140,10 @@
 
                 e.querySelector(':scope > g').style.fill = toggleCnt === 2 ? 'var(--pointColor)' : '#cbcbcb';
                 e.closest('span').classList[toggleCnt === 1 ? 'add' : 'remove']('setting');
+
+                if(toggleCnt === 1){
+                    t.a.target.style.display = 'block';
+                }
             }
         }
 
