@@ -12,6 +12,10 @@
             --pointColor: #008422;
             --trackColor: rgba(255, 255, 255, .7);
             --coverUrl: 'url() no-repeat center;';
+
+            /*사이즈*/
+            /*폰트*/
+            /*커버url*/
         }
 
 
@@ -253,6 +257,16 @@
             }
             .btns2 > *{margin-right: 24px;}
         }
+
+        /* @media(max-width: 520px){
+            .player{flex-direction: column;}
+            .cur-time{order: 2;}
+            .player1{order: 1;}
+            .total-time{order: 0;}
+        } */
+
+        /* .play-btn{fill: red!important;} */
+
     </style>
 </head>
 <body>
@@ -273,11 +287,10 @@
             <p>2화 - 2회 에밀 아자르 『자기 앞의 생』- 펼쳐진 생이 어떠하든 사랑만 있다면</p>
         </div>
         <div class="btns2">
-            <img src="./assets/imgs/prev.svg" onclick="audio1.skipTrack('prev');"/>
-            <img src="./assets/imgs/prev10.svg" onclick="audio1.skip('prev', 10);"/>
-            <!-- <img src="./assets/imgs/prev.svg" onclick="player1.moveAudio('prev');"/> -->
-            <!-- <img src="./assets/imgs/prev10.svg" onclick="player1.moveTrack('prev', 10);"/> -->
-            <div onclick="audio1.playPause();">
+            <img src="./assets/imgs/prev.svg" onclick="player1.moveAudio('prev');"/>
+            <img src="./assets/imgs/prev10.svg" onclick="player1.moveTrack('prev', 10);"/>
+            <!-- <img src="./assets/imgs/play.svg" /> -->
+            <div onclick="player1.playToggle();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" id="playBtn" class="btn-play">
                     <g data-name="타원 1" style="stroke:#cbcbcb;stroke-width:1.5px;fill:none">
                         <circle cx="32" cy="32" r="32" style="stroke:none"/>
@@ -296,10 +309,8 @@
                     </g>
                 </svg>
             </div>
-            <!-- <img src="./assets/imgs/next10.svg" onclick="player1.moveTrack('next', 10);"/> -->
-            <!-- <img src="./assets/imgs/next.svg" onclick="player1.moveAudio('next');"/> -->
-            <img src="./assets/imgs/next10.svg" onclick="audio1.skip('next', 10);"/>
-            <img src="./assets/imgs/next.svg" onclick="audio1.skipTrack('next');"/>
+            <img src="./assets/imgs/next10.svg" onclick="player1.moveTrack('next', 10);"/>
+            <img src="./assets/imgs/next.svg" onclick="player1.moveAudio('next');"/>
         </div>
         <div class="btns3">
             <div class="btns3-wrapper">
@@ -443,11 +454,9 @@
 
                 totalTime.innerHTML = sTohhmmss(target.target.duration);
             },
-            fncMoveHandler: (info) => { //핸들러 움직일 때
+            fncMoveHandler: (info) => {
                 const target = info.audioList[info.curAudioIdx];
                 const per = info.handler.deg / 360 * 100;
-
-                console.log(per);
 
                 curTime.innerHTML = sTohhmmss(target.target.duration * per * .01);
             }
@@ -1135,108 +1144,6 @@
                 if(toggleCnt === 1){
                     t.a.target.style.display = 'block';
                 }
-            }
-        }
-
-        const audio1 = new Audio1({
-            list: [
-                {
-                    audioUrl: './assets/audio/neverEndingStory.mp3',
-                    title: 'Never Ending Story - 부활',
-                    subtitle: '테스트'
-                },
-                {
-                    audioUrl: './assets/audio/jasmine.mp3',
-                    title: '말리꽃 - 이승철',
-                    subtitle: '테스트'
-                }
-            ],
-            audioAllLoaded: (a) => {
-                console.log(a);
-            }
-        });
-
-
-
-        function Audio1(obj) {
-            const t = this;
-
-            const exeFnc = fnc => (fnc && typeof fnc === 'function') ? fnc(t) : '';
-
-            t.curIdx = 0;
-            t.list = [];
-
-            function constructor(){
-                let allAudioReady = 0;
-
-                obj.list.forEach((audio, idx) => {
-                    const newAudio = new Audio(audio.audioUrl);
-
-                    newAudio.onloadeddata = () => {
-                        t.list[idx] = {
-                            idx: idx,
-                            audio: newAudio,
-                            title: audio.title,
-                            subtitle: audio.subtitle
-                        }
-
-                        allAudioReady++;
-                        if(obj.list.length == allAudioReady){
-                            // console.log(idx, '성공');
-
-                            exeFnc(obj.audioAllLoaded);
-
-                            allAudioReady = 0;
-                        }
-                    }
-                })
-            }
-
-            constructor();
-
-            t.playPause = (pp) => {
-                const target = t.list[t.curIdx].audio;
-                const isPaused = target.paused;
-
-                if(pp === undefined) target[target.paused ? 'play' : 'pause']();
-                else if(pp === 'play' || pp === 'pause') target[pp]();
-            }
-            t.stop = () => {
-                const target = t.list[t.curIdx].audio;
-                target.pause();
-                target.currentTime = 0;
-            }
-
-            t.skip = (dir, sec) => {
-                const target = t.list[t.curIdx].audio;
-                target.currentTime += (sec * (dir === 'prev' ? -1 : dir === 'next' ? 1 : 0));
-            }
-            
-            t.skipTrack = (dir) => {
-                const target = t.list[t.curIdx].audio;
-                const isPaused = target.paused;
-                let tmpIdx = t.curIdx;
-                tmpIdx += (dir === 'prev' ? -1 : dir === 'next' ? 1 : 0);
-                
-                if(tmpIdx < 0){
-                    tmpIdx = 0;
-                    alert('이전트랙이 없습니다.');
-                    return;
-                }
-                if(tmpIdx > t.list.length - 1){
-                    tmpIdx = t.list.length - 1;
-                    alert('다음트랙이 없습니다.');
-                    return;
-                }
-
-                t.list.forEach(audio => {
-                    audio.audio.pause();
-                    audio.audio.currentTime = 0;
-                });
-
-                t.curIdx = tmpIdx;
-
-                if(!isPaused) t.playPause();
             }
         }
 
