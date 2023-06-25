@@ -277,7 +277,7 @@
             <img src="./assets/imgs/prev10.svg" onclick="audio1.skip('prev', 10);"/>
             <!-- <img src="./assets/imgs/prev.svg" onclick="player1.moveAudio('prev');"/> -->
             <!-- <img src="./assets/imgs/prev10.svg" onclick="player1.moveTrack('prev', 10);"/> -->
-            <div onclick="audio1.playPause();">
+            <div onclick="playPause();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" id="playBtn" class="btn-play">
                     <g data-name="타원 1" style="stroke:#cbcbcb;stroke-width:1.5px;fill:none">
                         <circle cx="32" cy="32" r="32" style="stroke:none"/>
@@ -345,6 +345,10 @@
         const curTime = document.querySelector('#curTime');
         const audioTitle = document.querySelector('#audioInfo h2');
         const audioSubtitle = document.querySelector('#audioInfo p');
+        const playBtn = document.querySelector('#playBtn');
+        const pauseBtn = document.querySelector('#pauseBtn');
+
+        const perToDeg = per =>  per * .01 * 360;
         const getRandomNum = (mn, mx) => Math.floor(Math.random() * (mx - mn + 1));
         const toRGB = cde => {
             let r, g, b;
@@ -382,6 +386,15 @@
         
         const fillZero = (num, digit) =>  num < 10 ** digit ? String(10 ** digit + num).substr(1) : num;    //padStart로 대체 가능
         const sTohhmmss = s =>  `${fillZero(parseInt(s / 360), 2)} : ${fillZero(parseInt(s / 60), 2)} : ${fillZero((Math.round(s) % 60), 2)}`;
+
+        function playPause(){
+            audio1.playPause();
+
+            const isPaused = audio1.list[audio1.curIdx].audio.paused;
+
+            playBtn.classList[isPaused ? 'remove' : 'add']('none');
+            pauseBtn.classList[isPaused ? 'add' : 'remove']('none');
+        }
 
 
         const player1 = new Player1({
@@ -444,12 +457,18 @@
                 totalTime.innerHTML = sTohhmmss(target.target.duration);
             },
             fncMoveHandler: (info) => { //핸들러 움직일 때
-                const target = info.audioList[info.curAudioIdx];
-                const per = info.handler.deg / 360 * 100;
+                const per = info.handler.deg / 360 * 100;   //퍼센트
+                const target = audio1.list[audio1.curIdx].audio;
+                
+                if(!info.isDowned) target.currentTime = target.duration * per * .01;
+                curTime.innerHTML = sTohhmmss(target.duration * per * .01);
+            },
+            fncFinishHandler: (info) => { //핸들러에서 손 뗄데
+                const per = info.handler.deg / 360 * 100;   //퍼센트
+                const target = audio1.list[audio1.curIdx].audio;
 
-                console.log(per);
-
-                curTime.innerHTML = sTohhmmss(target.target.duration * per * .01);
+                target.currentTime = target.duration * per * .01;
+                curTime.innerHTML = sTohhmmss(target.duration * per * .01);
             }
         });
 
@@ -999,7 +1018,10 @@
                         const y = e.touches ? e.touches[0].clientY - xy.y : e.offsetY;
                         const deg = getDegByDxDy(x, y);
 
+                        console.log(deg);
+
                         t.update({handler_deg: deg}, '_', true);
+
 
                         exeFnc(param.fncMoveHandler);
                     }
@@ -1024,6 +1046,8 @@
                         t.update({progress_deg: deg}, '_', true);
                         if(t.isDowned) return;
                         t.update({handler_deg: deg}, '_', true);
+
+                        exeFnc(param.fncFinishHandler);
                     }
 
                 }
@@ -1153,6 +1177,24 @@
             ],
             audioAllLoaded: (a) => {
                 console.log(a);
+            },
+            audioPlaying: (a) => {
+                const target = a.list[a.curIdx].audio;
+
+                const deg = perToDeg(target.currentTime / target.duration * 100);
+
+                player1.update({
+                    progress_deg: deg
+                }, '_', true)
+                
+                if(!player1.isDowned){
+                    player1.update({
+                        handler_deg: deg
+                    }, '_', true)
+                };
+                // console.log(target);
+            },
+            skipTrack: (a) => {
             }
         });
 
@@ -1165,6 +1207,7 @@
 
             t.curIdx = 0;
             t.list = [];
+            t.raf = '';
 
             function constructor(){
                 let allAudioReady = 0;
@@ -1179,6 +1222,10 @@
                             title: audio.title,
                             subtitle: audio.subtitle
                         }
+
+                        newAudio.addEventListener('playing', function(){
+                            console.log(222);
+                        })
 
                         allAudioReady++;
                         if(obj.list.length == allAudioReady){
@@ -1200,11 +1247,15 @@
 
                 if(pp === undefined) target[target.paused ? 'play' : 'pause']();
                 else if(pp === 'play' || pp === 'pause') target[pp]();
+
+                if(!target.paused) playing();
+                else window.cancelAnimationFrame(t.raf);
             }
             t.stop = () => {
                 const target = t.list[t.curIdx].audio;
                 target.pause();
                 target.currentTime = 0;
+                window.cancelAnimationFrame(t.raf);
             }
 
             t.skip = (dir, sec) => {
@@ -1237,6 +1288,17 @@
                 t.curIdx = tmpIdx;
 
                 if(!isPaused) t.playPause();
+
+                exeFnc(obj.skipTrack);
+
+
+            }
+
+            function playing(){
+                const target = t.list[t.curIdx].audio;
+                exeFnc(obj.audioPlaying);
+
+                t.raf = window.requestAnimationFrame(playing);
             }
         }
 
