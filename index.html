@@ -269,8 +269,8 @@
             </span>
         </div>
         <div id="audioInfo" class="info">
-            <h2>하루 한 편 세상에서 가장 짧은 명작 읽기 2</h2>
-            <p>2화 - 2회 에밀 아자르 『자기 앞의 생』- 펼쳐진 생이 어떠하든 사랑만 있다면</p>
+            <h2>-</h2>
+            <p>-</p>
         </div>
         <div class="btns2">
             <img src="./assets/imgs/prev.svg" onclick="audio1.skipTrack('prev');"/>
@@ -457,7 +457,6 @@
         function Player1 (param){
             const t = this;
 
-            const perToDeg = per =>  per * .01 * 360;
             const curOffset = deg => t.player.circumference * (1 - (deg / 360));
             const radianToDeg  = r => r * 180 / Math.PI;
             const degToRadian  = deg => deg * Math.PI / 180;
@@ -973,6 +972,20 @@
             }
             
             constructor();
+
+            let toggleCnt = 0;
+
+            t.toggleAB = (e) => {
+                toggleCnt++;
+                if(toggleCnt > 2) toggleCnt = 0;
+
+                e.querySelector(':scope > g').style.fill = toggleCnt === 2 ? 'var(--pointColor)' : '#cbcbcb';
+                e.closest('span').classList[toggleCnt === 1 ? 'add' : 'remove']('setting');
+
+                if(toggleCnt === 1){
+                    t.a.target.style.display = 'block';
+                }
+            }
 
         }
 
