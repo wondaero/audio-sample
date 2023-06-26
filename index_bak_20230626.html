@@ -275,6 +275,8 @@
         <div class="btns2">
             <img src="./assets/imgs/prev.svg" onclick="audio1.skipTrack('prev');"/>
             <img src="./assets/imgs/prev10.svg" onclick="skip('prev', 10);"/>
+            <!-- <img src="./assets/imgs/prev.svg" onclick="player1.moveAudio('prev');"/> -->
+            <!-- <img src="./assets/imgs/prev10.svg" onclick="player1.moveTrack('prev', 10);"/> -->
             <div onclick="playPause();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" id="playBtn" class="btn-play">
                     <g data-name="타원 1" style="stroke:#cbcbcb;stroke-width:1.5px;fill:none">
@@ -294,6 +296,8 @@
                     </g>
                 </svg>
             </div>
+            <!-- <img src="./assets/imgs/next10.svg" onclick="player1.moveTrack('next', 10);"/> -->
+            <!-- <img src="./assets/imgs/next.svg" onclick="player1.moveAudio('next');"/> -->
             <img src="./assets/imgs/next10.svg" onclick="skip('next', 10);"/>
             <img src="./assets/imgs/next.svg" onclick="audio1.skipTrack('next');"/>
         </div>
@@ -407,19 +411,70 @@
             target: '#player1',
             size: 468,
             handlerSize: 16,
+            // handlerColor: '#005197',
+            // trackColor: 'rgba(255, 255, 255, .5)',
+            // progressColor: '#005197',
             progressWidth: 5,
             trackWidth: 3,
             coverMargin: 17,
             coverUrl: './assets/cover/neverEndingStory.jpg',
-            fncMoveHandler: (info, deg) => { //핸들러 움직일 때
-                const per = deg / 360 * 100;   //퍼센트
+            // audioList: [
+            //     {
+            //         audioUrl: './assets/audio/neverEndingStory.mp3',
+            //         title: 'Never Ending Story - 부활',
+            //         subtitle: '테스트'
+            //     },
+            //     {
+            //         audioUrl: './assets/audio/jasmine.mp3',
+            //         title: '말리꽃 - 이승철',
+            //         subtitle: '테스트'
+            //     }
+            // ],
+            // fncPlaying: (info) => { //플레이 중일때 계속 실행
+            //     const target = info.audioList[info.curAudioIdx];
+            //     if(!info.isDowned) curTime.innerHTML = sTohhmmss(target.target.currentTime);
+
+            // },
+            // fncAudioLoad: (info) => {
+            //     const target = info.audioList[info.curAudioIdx];
+
+            //     totalTime.innerHTML = sTohhmmss(target.target.duration);
+            //     audioTitle.innerHTML = target.title;
+            //     audioSubtitle.innerHTML = target.subtitle;
+
+            //     info.update({
+            //         player_color: `rgb(${getRandomNum(0, 255)}, ${getRandomNum(0, 255)}, ${getRandomNum(0, 255)})`
+            //     }, '_', true);
+            // },
+            // fncMoveAudio: (info) => {
+            //     const target = info.audioList[info.curAudioIdx];
+
+            //     curTime.innerHTML = sTohhmmss(target.target.currentTime);
+            //     totalTime.innerHTML = sTohhmmss(target.target.duration);
+            //     audioTitle.innerHTML = target.title;
+            //     audioSubtitle.innerHTML = target.subtitle;
+
+            //     info.update({
+            //         cover_src: info.cover.src
+            //     }, '_', true);
+
+            //     // info.cover.target.style.background = `url(${target.coverUrl}) no-repeat center`;
+            //     // info.cover.target.style.backgroundSize = `cover`;
+            // },
+            // fncMoveTrack: (info) => {
+            //     const target = info.audioList[info.curAudioIdx];
+
+            //     totalTime.innerHTML = sTohhmmss(target.target.duration);
+            // },
+            fncMoveHandler: (info) => { //핸들러 움직일 때
+                const per = info.handler.deg / 360 * 100;   //퍼센트
                 const target = audio1.list[audio1.curIdx].audio;
                 
                 if(!info.isDowned) target.currentTime = target.duration * per * .01;
                 curTime.innerHTML = sTohhmmss(target.duration * per * .01);
             },
-            fncFinishHandler: (info, deg) => { //핸들러에서 손 뗄데
-                const per = deg / 360 * 100;   //퍼센트
+            fncFinishHandler: (info) => { //핸들러에서 손 뗄데
+                const per = info.handler.deg / 360 * 100;   //퍼센트
                 const target = audio1.list[audio1.curIdx].audio;
 
                 target.currentTime = target.duration * per * .01;
@@ -451,6 +506,7 @@
                 }
             }
         }
+        // resize();
         window.onresize = resize;
 
         
@@ -461,7 +517,7 @@
             const curOffset = deg => t.player.circumference * (1 - (deg / 360));
             const radianToDeg  = r => r * 180 / Math.PI;
             const degToRadian  = deg => deg * Math.PI / 180;
-            const exeFnc = fnc => (fnc && typeof fnc === 'function') ? fnc(t, t.tmpDeg) : '';
+            const exeFnc = fnc => (fnc && typeof fnc === 'function') ? fnc(t) : '';
             const getDegByDxDy = (x, y) => {
                 const centerX = t.player.size * .5;
                 const centerY = t.player.size * .5;
@@ -494,6 +550,7 @@
 
             //상태값
             t.isDowned = false; //마우스 클릭시
+            // t.raf;
             t.isAB = false;
 
             t.player = {
@@ -567,7 +624,10 @@
 
             t.audioList = [];
 
-            t.deg = 0;
+            t.curAudioIdx = 0;
+
+            
+
 
             t.update = (obj, separator, ui) => {
                 t.change.length = 0;
@@ -783,6 +843,33 @@
                     t.abSection.target = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     t.startTick.target = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 
+
+                    //오디오 영역
+                    // let allAudioReady = 0;
+
+                    // param.audioList.forEach((audio, idx) => {
+                    //     const newAudio = new Audio(audio.audioUrl);
+
+                    //     newAudio.onloadeddata = () => {
+                    //         t.audioList[idx] = {
+                    //             idx: idx,
+                    //             target: newAudio,
+                    //             title: audio.title,
+                    //             subtitle: audio.subtitle
+                    //         }
+
+                    //         allAudioReady++;
+                    //         if(param.audioList.length == allAudioReady){
+                    //             // console.log(idx, '성공');
+
+                    //             exeFnc(param.fncAudioLoad);
+
+                    //             setUI();
+                    //             resize();
+                    //             allAudioReady = 0;
+                    //         }
+                    //     }
+                    // });
                 }
 
                 setUI();
@@ -941,9 +1028,10 @@
                         const y = e.touches ? e.touches[0].clientY - xy.y : e.offsetY;
                         const deg = getDegByDxDy(x, y);
 
-                        t.tmpDeg = deg;
+                        console.log(deg);
 
                         t.update({handler_deg: deg}, '_', true);
+
 
                         exeFnc(param.fncMoveHandler);
                     }
@@ -957,14 +1045,17 @@
                         const y = e.changedTouches ? e.changedTouches[0].clientY - xy.y : e.offsetY;
 
                         const deg = getDegByDxDy(x, y);
+                        // const percent = deg / 360 * 100;
+
+                        // const target = t.audioList[t.curAudioIdx].target;
+
+                        // target.currentTime = target.duration * percent * .01;
 
                         t.isDowned = false;
 
                         t.update({progress_deg: deg}, '_', true);
                         if(t.isDowned) return;
                         t.update({handler_deg: deg}, '_', true);
-
-                        t.tmpDeg = deg;
 
                         exeFnc(param.fncFinishHandler);
                     }
@@ -974,6 +1065,111 @@
             
             constructor();
 
+            // t.play = () => {
+            //     const target = t.audioList[t.curAudioIdx];
+            //     target.play();
+            // }
+
+            
+
+            // t.playToggle = (bool) => {
+            //     const target = t.audioList[t.curAudioIdx].target;
+            //     const toggleBase = bool === undefined ? target.paused : bool;
+            //     target[toggleBase ? 'play' : 'pause']();
+
+            //     target.paused ? window.cancelAnimationFrame(t.raf) : t.playing();
+                
+            //     document.querySelector('#playBtn').classList[target.paused ? 'remove' : 'add']('none');
+            //     document.querySelector('#pauseBtn').classList[target.paused ? 'add' : 'remove']('none');
+            // }
+
+
+            // t.playing = () => {
+            //     const target = t.audioList[t.curAudioIdx].target;
+            //     const deg = perToDeg(target.currentTime / target.duration * 100);
+
+            //     t.update({
+            //         progress_deg: deg
+            //     }, '_', true)
+                
+            //     if(!t.isDowned){
+            //         t.update({
+            //             handler_deg: deg
+            //         }, '_', true)
+            //     };
+
+            //     exeFnc(param.fncPlaying);
+                
+            //     t.raf = window.requestAnimationFrame(t.playing);
+
+            // }
+
+            // t.moveTrack = (dir, sec) => {
+            //     const target = t.audioList[t.curAudioIdx].target;
+
+            //     target.currentTime = target.currentTime + (sec * (dir === 'next' ? 1 : -1));
+            //     if(target.currentTime < 0) target.currentTime = 0;
+            //     if(target.currentTime > target.duration) target.currentTime = target.duration;
+
+            //     const deg = perToDeg(target.currentTime / target.duration * 100);
+
+            //     t.update({
+            //         progress_deg: deg,
+            //         handler_deg: deg
+            //     }, '_', true);
+
+            //     exeFnc(param.fncMoveTrack);
+            // }
+
+            // t.moveAudio = (dir) => {
+            //     const target = t.audioList[t.curAudioIdx].target;
+
+            //     const isPlaying = !target.paused;
+
+            //     if(target.currentTime  > 5){ //다시듣기
+            //         target.currentTime = 0;
+
+            //         t.update({
+            //             progress_deg: 0,
+            //             handler_deg: 0
+            //         }, '_', true);
+
+            //         exeFnc(param.fncMoveAudio);
+
+            //         return;
+            //     }
+
+            //     t.playToggle(false);
+            //     target.currentTime = 0;
+
+            //     t.update({
+            //         progress_deg: 0,
+            //         handler_deg: 0
+            //     }, '_', true);
+
+            //     t.curAudioIdx = t.curAudioIdx + (1 * (dir === 'next' ? 1 : -1));
+            //     if(t.curAudioIdx < 0) t.curAudioIdx = t.audioList.length - 1;
+            //     if(t.curAudioIdx > t.audioList.length - 1) t.curAudioIdx = 0;
+
+            //     const target2 = t.audioList[t.curAudioIdx].target;
+            //     if(isPlaying) t.playToggle(true);
+
+            //     exeFnc(param.fncMoveAudio);
+            // }
+
+            // let toggleCnt = 0;
+
+            // t.toggleAB = (e) => {
+            //     toggleCnt++;
+            //     if(toggleCnt > 2) toggleCnt = 0;
+
+            //     e.querySelector(':scope > g').style.fill = toggleCnt === 2 ? 'var(--pointColor)' : '#cbcbcb';
+            //     e.closest('span').classList[toggleCnt === 1 ? 'add' : 'remove']('setting');
+
+            //     if(toggleCnt === 1){
+            //         t.a.target.style.display = 'block';
+            //     }
+            // }
         }
 
         const audio1 = new Audio1({
@@ -1019,6 +1215,7 @@
                 };
 
                 curTime.innerHTML = sTohhmmss(a.audio.currentTime);
+                totalTime.innerHTML = sTohhmmss(a.audio.duration);
             },
             skipTrack: (a) => {
                 curTime.innerHTML = sTohhmmss(a.audio.currentTime);
@@ -1056,6 +1253,10 @@
                             title: audio.title,
                             subtitle: audio.subtitle
                         }
+
+                        newAudio.addEventListener('playing', function(){
+                            console.log(222);
+                        })
 
                         allAudioReady++;
                         if(obj.list.length == allAudioReady){
