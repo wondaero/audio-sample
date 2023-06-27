@@ -261,6 +261,7 @@ export function Player1(param){
                     t.handler.target.setAttribute('cx', t.handler.cx);
                     t.handler.target.setAttribute('cy', t.handler.cy);
                     t.handler.target.setAttribute('r', t.handler.size * .5);
+
                 } else if(key2 === 'color'){
                     const color = toRGB(t.player.color);
                     let overAll120 = true;
@@ -292,6 +293,9 @@ export function Player1(param){
             }
 
             if(key1 === 'handler'){
+                const a = t.a.target;
+                const b = t.a.target;
+
                 if(key2 === 'size'){
                     t.progress.target.setAttribute('r', t.progress.radius);
                     t.track.target.setAttribute('r', t.track.radius);
@@ -303,29 +307,19 @@ export function Player1(param){
                     const a = t.a.target;
                     const b = t.a.target;
 
-                    const aOuter = a.querySelector('.outer');
-                    const aInner = a.querySelector('.inner');
-                    const aText = a.querySelector('text');
+
+                    a.setAttribute('transform', `translate(${t.player.size * .5 - t.handler.size * .5} 0) scale(${t.handler.size * .1}, ${t.handler.size * .1})`);
                     
-                    aOuter.setAttribute('r', t.handler.size * .5);
-                    aInner.setAttribute('r', t.handler.size * .5 - 1);
-                    aText.style.cssText = `
-                        fill:var(--pointColor);
-                        font-weight: 900;
-                        font-size: ${t.handler.size * .5};
-                    `;
-                    aText.setAttribute('x', t.handler.size * .5);
-                    aText.setAttribute('y', t.handler.size * .5);
-                    aText.setAttribute('dx', t.handler.size / -6);
-                    aText.setAttribute('dy', t.handler.size / 6);
-
-
-
-                    // t.a.target.setAttribute('transform', `translate(${t.handler.cx - t.handler.size * .5} ${t.handler.cy - t.handler.size * .5})`);
-                    // t.b.target.setAttribute('transform', `translate(${t.handler.cx - t.handler.size * .5} ${t.handler.cy - t.handler.size * .5})`);
                 }else if(key2 === 'deg'){
                     t.handler.target.setAttribute('cx', t.handler.cx);
                     t.handler.target.setAttribute('cy', t.handler.cy);
+                    // a.setAttribute(
+                    //     'transform',
+                    //     `
+                    //         translate(${t.handler.cx - (t.handler.size * .5)} ${t.handler.cy - (t.handler.size * .5)})
+                    //         scale(${t.handler.size * .1}, ${t.handler.size * .1})
+                    //     `
+                    // );
                 }
             };
 
@@ -411,6 +405,7 @@ export function Player1(param){
                 position: absolute;
                 top: ${imgOffset}px;
                 left: ${imgOffset}px;
+                display: none;
             `;
 
             document.documentElement.style.setProperty('--coverUrl', `url(${t.cover.src}) no-repeat center`);
@@ -440,32 +435,31 @@ export function Player1(param){
             t.handler.target.setAttribute('r', t.handler.size * .5);
 
             t.a.target.classList.add('handler-a');
-            t.a.target.setAttribute('transform', `translate(${t.player.size * .5 - t.handler.size * .5} 0)`);
+            t.a.target.setAttribute('transform', `translate(${t.player.size * .5 - t.handler.size * .5} 0) scale(1.6, 1.6)`);
             t.a.target.style.display = 'none';
 
             const aCircleOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             aCircleOuter.classList.add('outer');
-            aCircleOuter.setAttribute('cx', t.handler.size * .5);
-            aCircleOuter.setAttribute('cy', t.handler.size * .5);
-            aCircleOuter.setAttribute('r', t.handler.size * .5);
+            aCircleOuter.setAttribute('cx', 5);
+            aCircleOuter.setAttribute('cy', 5);
+            aCircleOuter.setAttribute('r', 5);
             aCircleOuter.style.cssText = `fill: var(--pointColor);`;
             const aCircleInner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             aCircleInner.classList.add('inner');
-            aCircleInner.setAttribute('cx', t.handler.size * .5);
-            aCircleInner.setAttribute('cy', t.handler.size * .5);
-            aCircleInner.setAttribute('r', t.handler.size * .5 - 1);
+            aCircleInner.setAttribute('cx', 5);
+            aCircleInner.setAttribute('cy', 5);
+            aCircleInner.setAttribute('r', 4);
             aCircleInner.style.cssText = `fill: #fff;`;
             
             const aText = document.createElementNS("http://www.w3.org/2000/svg", "text");
             aText.innerHTML = 'A';
-            aText.setAttribute('x', t.handler.size * .5);
-            aText.setAttribute('y', t.handler.size * .5);
-            aText.setAttribute('dx', t.handler.size / -6);
-            aText.setAttribute('dy', t.handler.size / 6);
+            aText.setAttribute('x', 3.2);
+            aText.setAttribute('y', 6.7);
+
             aText.style.cssText = `
                 fill:var(--pointColor);
                 font-weight: 900;
-                font-size: ${t.handler.size * .5};
+                font-size: 5;
             `;
             
             t.a.target.appendChild(aCircleOuter);
@@ -588,6 +582,17 @@ export function Player1(param){
 
         if(toggleCnt === 1){
             t.a.target.style.display = 'block';
+
+            t.a.target.setAttribute(
+                'transform',
+                `
+                    translate(${t.handler.cx - (t.handler.size * .5)} ${t.handler.cy - (t.handler.size * .5)})
+                    scale(${t.handler.size * .1}, ${t.handler.size * .1})
+                `
+            );
+
+            console.log(t.handler.deg);
         }
+
     }
 }
